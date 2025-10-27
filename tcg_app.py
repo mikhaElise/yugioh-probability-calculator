@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide",
     page_title="YGO Prob Calc",
     page_icon="🎲",
-    initial_sidebar_state="auto" # 让侧边栏状态更稳定
+    initial_sidebar_state="auto", # 让侧边栏状态更稳定
     theme="dark"
 )
 # --- 页面配置结束 ---
