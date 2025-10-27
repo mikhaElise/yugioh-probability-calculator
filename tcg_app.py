@@ -1,3 +1,15 @@
+好的，已经按你的要求修改完毕：
+
+1.  侧边栏 “Highlight NE Value / 高亮系统外数量” 后面的 `(用于 Part 3 & 4)` 已被删除。
+2.  Part 3 和 Part 4 图表下方显示高亮 `NE` 值对应概率的 `st.metric` 部分，格式已修改为百分比，并保留小数点后两位（例如 `12.34%`）。
+
+-----
+
+### 📄 `tcg_app.py` (已更新高亮格式和侧边栏标签)
+
+这是**完整**的 `tcg_app.py` 文件，只保留了代码。
+
+```python
 # -*- coding: utf-8 -*-
 import streamlit as st
 import streamlit.components.v1 as components
@@ -515,23 +527,21 @@ HAND_SIZE = st.sidebar.number_input(
 STARTER_COUNT_K = st.sidebar.number_input(
     "3. Fixed Starter Count (K) / 固定动点数",
     min_value=0,
-    max_value=DECK_SIZE, # Max K cannot exceed Deck Size
-    value=min(24, DECK_SIZE), # Default value also capped by Deck Size
+    max_value=DECK_SIZE, 
+    value=min(24, DECK_SIZE), 
     step=1,
     help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。"
 )
 
-# --- (新) NE 高亮输入框 ---
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
 NE_HIGHLIGHT = st.sidebar.number_input(
-    "4. Highlight NE Value / 高亮系统外数量 (用于 Part 3 & 4)",
+    "4. Highlight NE Value / 高亮系统外数量", # <-- (用于 Part 3 & 4) 已移除
     min_value=0,
-    max_value=max_ne_possible if max_ne_possible >= 0 else 0, # Ensure max_value is not negative
-    value=min(9, max_ne_possible) if max_ne_possible >= 0 else 0, # Default to 9 or max possible
+    max_value=max_ne_possible if max_ne_possible >= 0 else 0, 
+    value=min(9, max_ne_possible) if max_ne_possible >= 0 else 0, 
     step=1,
     help=f"输入一个 NE 值 (0 到 {max_ne_possible if max_ne_possible >= 0 else 0})，将在 Part 3 和 4 图表下方显示该点的精确概率。"
 )
-# --- 新输入框结束 ---
 
 
 st.title("YGO Opening Hand Probability Calculator / YGO起手概率计算器")
@@ -585,19 +595,16 @@ else:
     
     st.line_chart(df_plot_3)
     
-    # --- (新) 显示高亮点的概率 ---
     if NE_HIGHLIGHT in df_plot_3.index:
         highlight_data = df_plot_3.loc[NE_HIGHLIGHT]
         st.write(f"**Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的概率:**")
         cols = st.columns(len(highlight_data))
         for i, (col_name, prob) in enumerate(highlight_data.items()):
             with cols[i]:
-                # Extract the curve name (e.g., C0 (i=0 NE))
                 curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
-                st.metric(label=curve_label, value=f"{prob:.4%}")
+                st.metric(label=curve_label, value=f"{prob:.2%}") # <-- 修改为 .2%
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE})。")
-    # --- 高亮显示结束 ---
 
     st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
@@ -619,7 +626,6 @@ else:
     
     st.line_chart(df_plot_3_cumulative)
 
-    # --- (新) 显示高亮点的概率 ---
     if NE_HIGHLIGHT in df_plot_3_cumulative.index:
         highlight_data_cumul = df_plot_3_cumulative.loc[NE_HIGHLIGHT]
         st.write(f"**Cumulative Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的累积概率:**")
@@ -627,10 +633,9 @@ else:
         for i, (col_name, prob) in enumerate(highlight_data_cumul.items()):
              with cols_cumul[i]:
                 curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
-                st.metric(label=curve_label, value=f"{prob:.4%}")
+                st.metric(label=curve_label, value=f"{prob:.2%}") # <-- 修改为 .2%
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_2}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_2})。")
-    # --- 高亮显示结束 ---
     
     st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示累积概率，边际和曲率。")
@@ -653,7 +658,6 @@ else:
     
     st.line_chart(df_plot_4)
 
-    # --- (新) 显示高亮点的概率 ---
     if NE_HIGHLIGHT in df_plot_4.index:
         highlight_data_4 = df_plot_4.loc[NE_HIGHLIGHT]
         st.write(f"**Exact Hand Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的精确手牌概率:**")
@@ -661,10 +665,9 @@ else:
         for i, (col_name, prob) in enumerate(highlight_data_4.items()):
             with cols_4[i]:
                 curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
-                st.metric(label=curve_label, value=f"{prob:.4%}")
+                st.metric(label=curve_label, value=f"{prob:.2%}") # <-- 修改为 .2%
     else:
          st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_4}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_4})。")
-    # --- 高亮显示结束 ---
     
     st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
@@ -672,3 +675,4 @@ else:
     for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
+```
