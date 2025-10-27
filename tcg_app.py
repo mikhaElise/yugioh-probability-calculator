@@ -5,6 +5,18 @@ import pandas as pd
 import math
 from PIL import Image
 
+# --- 页面配置 (包含主题设置) ---
+st.set_page_config(
+    layout="wide",
+    page_title="YGO Prob Calc",
+    page_icon="🎲",
+    initial_sidebar_state="auto" # 让侧边栏状态更稳定
+    # 默认情况下，Streamlit Cloud 会尝试匹配用户系统的主题（深色/浅色）
+    # 如果你想强制使用深色主题，取消下面一行的注释:
+    # theme="dark"
+)
+# --- 页面配置结束 ---
+
 @st.cache_data
 def safe_comb(n, k):
     if k < 0 or n < k or n < 0:
