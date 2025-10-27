@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*- # <-- 添加这行确保中文字符正确显示
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -90,13 +91,13 @@ def get_starter_probability_data(N, n):
         p_eq_5_list.append(p_eq_5)
 
     df_plot = pd.DataFrame({
-        "K (Starters)": plot_k_col,
-        "P(X >= 1)": p_ge_1_list,
-        "P(X >= 2)": p_ge_2_list,
-        "P(X >= 3)": p_ge_3_list,
-        "P(X >= 4)": p_ge_4_list,
-        "P(X = 5)": p_eq_5_list
-    }).set_index("K (Starters)")
+        "K (Starters / 动点)": plot_k_col,
+        "P(X >= 1 / 至少1张)": p_ge_1_list,
+        "P(X >= 2 / 至少2张)": p_ge_2_list,
+        "P(X >= 3 / 至少3张)": p_ge_3_list,
+        "P(X >= 4 / 至少4张)": p_ge_4_list,
+        "P(X = 5 / 正好5张)": p_eq_5_list
+    }).set_index("K (Starters / 动点)")
 
     table_K_col = list(range(1, N + 1))
     table_P_col = p_ge_1_full_for_table[2 : N + 2] 
@@ -104,11 +105,11 @@ def get_starter_probability_data(N, n):
     table_C_col = [p_ge_1_full_for_table[i+3] - 2*p_ge_1_full_for_table[i+2] + p_ge_1_full_for_table[i+1] for i in range(len(table_K_col))]
 
     df_table = pd.DataFrame({
-        "K (Starters)": table_K_col,
-        f"P(X>=1) (N={N}, n={n})": table_P_col,
-        "P(K) - P(K-1) (Marginal)": table_D_col,
-        "P(K+1)-2P(K)+P(K-1) (Curvature)": table_C_col
-    }).set_index("K (Starters)") 
+        "K (Starters / 动点)": table_K_col,
+        f"P(X>=1) (N={N}, n={n}) / 至少1张概率": table_P_col,
+        "P(K) - P(K-1) (Marginal / 边际)": table_D_col,
+        "P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)": table_C_col
+    }).set_index("K (Starters / 动点)") 
     
     return df_plot, df_table
 
@@ -133,9 +134,9 @@ def get_combo_probability_data(D, n, K_fixed):
     plot_A_col = list(range(max_A + 1))
     plot_P_col = P_values_full[1 : max_A + 2]
     df_plot = pd.DataFrame({
-        "A (Insecticides)": plot_A_col,
-        "Probability": plot_P_col
-    }).set_index("A (Insecticides)")
+        "A (Insecticides / 杀虫剂)": plot_A_col,
+        "Probability / 概率": plot_P_col
+    }).set_index("A (Insecticides / 杀虫剂)")
 
     table_A_col = list(range(max_A + 1))
     table_P_col = P_values_full[1 : max_A + 2]
@@ -143,11 +144,11 @@ def get_combo_probability_data(D, n, K_fixed):
     table_C_col = [P_values_full[i+2] - 2*P_values_full[i+1] + P_values_full[i] for i in range(len(table_A_col))]
     
     df_table = pd.DataFrame({
-        "A (Insecticides)": table_A_col,
-        "Probability": table_P_col,
-        "P(A+1) - P(A) (Marginal)": table_D_col,
-        "P(A+1)-2P(A)+P(A-1) (Curvature)": table_C_col
-    }).set_index("A (Insecticides)")
+        "A (Insecticides / 杀虫剂)": table_A_col,
+        "Probability / 概率": table_P_col,
+        "P(A+1) - P(A) (Marginal / 边际)": table_D_col,
+        "P(A+1)-2P(A)+P(A-1) (Curvature / 曲率)": table_C_col
+    }).set_index("A (Insecticides / 杀虫剂)")
     return df_plot, df_table
 
 @st.cache_data
@@ -225,9 +226,7 @@ def calculate_part3_prob_single(NE, D, K_fixed, i):
 
         P_NOT_B_given_A_5 = P_k5_is_0_c7 * P_6th_not_K
         
-        # Original code had P_A_5 * P_NOT_B_given_A_5 which seemed incorrect based on description
-        # Assuming the description "0 K in 6" means P(NOT B) overall for the condition A=5
-        final_prob = P_A_5 * P_NOT_B_given_A_5 # Keep calculation as P(A=5 AND Not B)
+        final_prob = P_A_5 * P_NOT_B_given_A_5 
 
     return final_prob
 
@@ -245,26 +244,26 @@ def get_part3_data(D, K_fixed):
         P_full[7].append(calculate_part3_prob_single(ne_val, D, K_fixed, 7))
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col})
-    df_plot[f"C0 (i=0 NE)"] = P_full[0][1 : max_NE + 2]
-    df_plot[f"C1 (i=1 NE)"] = P_full[1][1 : max_NE + 2]
-    df_plot[f"C2 (i=2 NE)"] = P_full[2][1 : max_NE + 2]
-    df_plot[f"C3 (i=3 NE)"] = P_full[3][1 : max_NE + 2]
-    df_plot[f"C4 (i=4 NE)"] = P_full[4][1 : max_NE + 2]
-    df_plot[f"C6 (i=5 NE, >=1 K)"] = P_full[5][1 : max_NE + 2]
-    df_plot[f"C7 (i=5 NE, 0 K)"] = P_full[7][1 : max_NE + 2]
+    df_plot = pd.DataFrame({"NE (Non-Engine / 系统外)": plot_NE_col})
+    df_plot[f"C0 (i=0 NE / 0张系统外)"] = P_full[0][1 : max_NE + 2]
+    df_plot[f"C1 (i=1 NE / 1张系统外)"] = P_full[1][1 : max_NE + 2]
+    df_plot[f"C2 (i=2 NE / 2张系统外)"] = P_full[2][1 : max_NE + 2]
+    df_plot[f"C3 (i=3 NE / 3张系统外)"] = P_full[3][1 : max_NE + 2]
+    df_plot[f"C4 (i=4 NE / 4张系统外)"] = P_full[4][1 : max_NE + 2]
+    df_plot[f"C6 (i=5 NE, >=1 K / 5张系统外, >=1动点)"] = P_full[5][1 : max_NE + 2]
+    df_plot[f"C7 (i=5 NE, 0 K / 5张系统外, 0动点)"] = P_full[7][1 : max_NE + 2]
     
-    df_plot = df_plot.set_index("NE (Non-Engine)")
+    df_plot = df_plot.set_index("NE (Non-Engine / 系统外)")
 
     all_tables = []
     curve_names = [
-        "C0: P(0 NE in 5, >=1 K in 6)",
-        "C1: P(1 NE in 5, >=1 K in 6)",
-        "C2: P(2 NE in 5, >=1 K in 6)",
-        "C3: P(3 NE in 5, >=1 K in 6)",
-        "C4: P(4 NE in 5, >=1 K in 6)",
-        "C6: P(5 NE in 5, >=1 K in 6)",
-        "C7: P(5 NE in 5, 0 K in 6)"
+        "C0: P(0 NE in 5, >=1 K in 6) / 抽5张含0系统外, 抽6张含>=1动点",
+        "C1: P(1 NE in 5, >=1 K in 6) / 抽5张含1系统外, 抽6张含>=1动点",
+        "C2: P(2 NE in 5, >=1 K in 6) / 抽5张含2系统外, 抽6张含>=1动点",
+        "C3: P(3 NE in 5, >=1 K in 6) / 抽5张含3系统外, 抽6张含>=1动点",
+        "C4: P(4 NE in 5, >=1 K in 6) / 抽5张含4系统外, 抽6张含>=1动点",
+        "C6: P(5 NE in 5, >=1 K in 6) / 抽5张含5系统外, 抽6张含>=1动点",
+        "C7: P(5 NE in 5, 0 K in 6) / 抽5张含5系统外, 抽6张含0动点"
     ]
     
     for i_curve_internal in [0, 1, 2, 3, 4, 5, 7]:
@@ -277,17 +276,17 @@ def get_part3_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine)": table_NE_col,
-            "Probability": table_P_col,
-            "Marginal": table_D_col,
-            "Curvature": table_C_col
+            "NE (Non-Engine / 系统外)": table_NE_col,
+            "Probability / 概率": table_P_col,
+            "Marginal / 边际": table_D_col,
+            "Curvature / 曲率": table_C_col
         })
-        df_table = df_table.set_index("NE (Non-Engine)")
+        df_table = df_table.set_index("NE (Non-Engine / 系统外)")
         
         df_display = df_table.copy()
-        df_display["Probability"] = df_display["Probability"].map('{:.4%}'.format)
-        df_display["Marginal"] = df_display["Marginal"].map('{:+.4%}'.format)
-        df_display["Curvature"] = df_display["Curvature"].map('{:+.4%}'.format)
+        df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
+        df_display["Marginal / 边际"] = df_display["Marginal / 边际"].map('{:+.4%}'.format)
+        df_display["Curvature / 曲率"] = df_display["Curvature / 曲率"].map('{:+.4%}'.format)
         
         table_name = curve_names[5] if i_curve_internal == 5 else (curve_names[6] if i_curve_internal == 7 else curve_names[i_curve_internal])
         all_tables.append((table_name, df_display))
@@ -317,21 +316,21 @@ def get_part3_cumulative_data(D, K_fixed):
         P_cumulative_full[4][ne_idx] = p5                     
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col})
-    df_plot[f"C_ge1 (>=1 NE)"] = P_cumulative_full[0][1 : max_NE + 2]
-    df_plot[f"C_ge2 (>=2 NE)"] = P_cumulative_full[1][1 : max_NE + 2]
-    df_plot[f"C_ge3 (>=3 NE)"] = P_cumulative_full[2][1 : max_NE + 2]
-    df_plot[f"C_ge4 (>=4 NE)"] = P_cumulative_full[3][1 : max_NE + 2]
-    df_plot[f"C_ge5 (>=5 NE)"] = P_cumulative_full[4][1 : max_NE + 2]
-    df_plot = df_plot.set_index("NE (Non-Engine)")
+    df_plot = pd.DataFrame({"NE (Non-Engine / 系统外)": plot_NE_col})
+    df_plot[f"C_ge1 (>=1 NE / >=1张系统外)"] = P_cumulative_full[0][1 : max_NE + 2]
+    df_plot[f"C_ge2 (>=2 NE / >=2张系统外)"] = P_cumulative_full[1][1 : max_NE + 2]
+    df_plot[f"C_ge3 (>=3 NE / >=3张系统外)"] = P_cumulative_full[2][1 : max_NE + 2]
+    df_plot[f"C_ge4 (>=4 NE / >=4张系统外)"] = P_cumulative_full[3][1 : max_NE + 2]
+    df_plot[f"C_ge5 (>=5 NE / >=5张系统外)"] = P_cumulative_full[4][1 : max_NE + 2]
+    df_plot = df_plot.set_index("NE (Non-Engine / 系统外)")
 
     all_tables = []
     curve_names = [
-        "C_ge1: P(>=1 NE in 5, >=1 K in 6)",
-        "C_ge2: P(>=2 NE in 5, >=1 K in 6)",
-        "C_ge3: P(>=3 NE in 5, >=1 K in 6)",
-        "C_ge4: P(>=4 NE in 5, >=1 K in 6)",
-        "C_ge5: P(>=5 NE in 5, >=1 K in 6)",
+        "C_ge1: P(>=1 NE in 5, >=1 K in 6) / 抽5张含>=1系统外, 抽6张含>=1动点",
+        "C_ge2: P(>=2 NE in 5, >=1 K in 6) / 抽5张含>=2系统外, 抽6张含>=1动点",
+        "C_ge3: P(>=3 NE in 5, >=1 K in 6) / 抽5张含>=3系统外, 抽6张含>=1动点",
+        "C_ge4: P(>=4 NE in 5, >=1 K in 6) / 抽5张含>=4系统外, 抽6张含>=1动点",
+        "C_ge5: P(>=5 NE in 5, >=1 K in 6) / 抽5张含>=5系统外, 抽6张含>=1动点",
     ]
 
     for i_curve in range(5): 
@@ -343,17 +342,17 @@ def get_part3_cumulative_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine)": table_NE_col,
-            "Probability": table_P_col,
-            "Marginal": table_D_col,
-            "Curvature": table_C_col
+            "NE (Non-Engine / 系统外)": table_NE_col,
+            "Probability / 概率": table_P_col,
+            "Marginal / 边际": table_D_col,
+            "Curvature / 曲率": table_C_col
         })
-        df_table = df_table.set_index("NE (Non-Engine)")
+        df_table = df_table.set_index("NE (Non-Engine / 系统外)")
         
         df_display = df_table.copy()
-        df_display["Probability"] = df_display["Probability"].map('{:.4%}'.format)
-        df_display["Marginal"] = df_display["Marginal"].map('{:+.4%}'.format)
-        df_display["Curvature"] = df_display["Curvature"].map('{:+.4%}'.format)
+        df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
+        df_display["Marginal / 边际"] = df_display["Marginal / 边际"].map('{:+.4%}'.format)
+        df_display["Curvature / 曲率"] = df_display["Curvature / 曲率"].map('{:+.4%}'.format)
         
         all_tables.append((curve_names[i_curve], df_display))
 
@@ -392,25 +391,25 @@ def get_part4_data(D, K_fixed):
             P_full[i].append(calculate_part4_prob_single(ne_val, D, K_fixed, i))
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col})
-    df_plot[f"C1 (1NE, 5K)"] = P_full[1][1 : max_NE + 2]
-    df_plot[f"C2 (2NE, 4K)"] = P_full[2][1 : max_NE + 2]
-    df_plot[f"C3 (3NE, 3K)"] = P_full[3][1 : max_NE + 2]
-    df_plot[f"C4 (4NE, 2K)"] = P_full[4][1 : max_NE + 2]
-    df_plot[f"C5 (5NE, 1K)"] = P_full[5][1 : max_NE + 2]
-    df_plot[f"C6 (6NE, 0K)"] = P_full[6][1 : max_NE + 2]
+    df_plot = pd.DataFrame({"NE (Non-Engine / 系统外)": plot_NE_col})
+    df_plot[f"C1 (1NE, 5K / 1系统外, 5动点)"] = P_full[1][1 : max_NE + 2]
+    df_plot[f"C2 (2NE, 4K / 2系统外, 4动点)"] = P_full[2][1 : max_NE + 2]
+    df_plot[f"C3 (3NE, 3K / 3系统外, 3动点)"] = P_full[3][1 : max_NE + 2]
+    df_plot[f"C4 (4NE, 2K / 4系统外, 2动点)"] = P_full[4][1 : max_NE + 2]
+    df_plot[f"C5 (5NE, 1K / 5系统外, 1动点)"] = P_full[5][1 : max_NE + 2]
+    df_plot[f"C6 (6NE, 0K / 6系统外, 0动点)"] = P_full[6][1 : max_NE + 2]
     
-    df_plot = df_plot.set_index("NE (Non-Engine)")
+    df_plot = df_plot.set_index("NE (Non-Engine / 系统外)")
 
     all_tables = []
     curve_names = [
         "", 
-        "C1: P(1 NE, 5 K in 6)",
-        "C2: P(2 NE, 4 K in 6)",
-        "C3: P(3 NE, 3 K in 6)",
-        "C4: P(4 NE, 2 K in 6)",
-        "C5: P(5 NE, 1 K in 6)",
-        "C6: P(6 NE, 0 K in 6)"
+        "C1: P(1 NE, 5 K in 6) / 抽6张含1系统外, 5动点",
+        "C2: P(2 NE, 4 K in 6) / 抽6张含2系统外, 4动点",
+        "C3: P(3 NE, 3 K in 6) / 抽6张含3系统外, 3动点",
+        "C4: P(4 NE, 2 K in 6) / 抽6张含4系统外, 2动点",
+        "C5: P(5 NE, 1 K in 6) / 抽6张含5系统外, 1动点",
+        "C6: P(6 NE, 0 K in 6) / 抽6张含6系统外, 0动点"
     ]
     
     for i_curve in range(1, 7): 
@@ -423,17 +422,17 @@ def get_part4_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine)": table_NE_col,
-            "Probability": table_P_col,
-            "Marginal": table_D_col,
-            "Curvature": table_C_col
+            "NE (Non-Engine / 系统外)": table_NE_col,
+            "Probability / 概率": table_P_col,
+            "Marginal / 边际": table_D_col,
+            "Curvature / 曲率": table_C_col
         })
-        df_table = df_table.set_index("NE (Non-Engine)")
+        df_table = df_table.set_index("NE (Non-Engine / 系统外)")
         
         df_display = df_table.copy()
-        df_display["Probability"] = df_display["Probability"].map('{:.4%}'.format)
-        df_display["Marginal"] = df_display["Marginal"].map('{:+.4%}'.format)
-        df_display["Curvature"] = df_display["Curvature"].map('{:+.4%}'.format)
+        df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
+        df_display["Marginal / 边际"] = df_display["Marginal / 边际"].map('{:+.4%}'.format)
+        df_display["Curvature / 曲率"] = df_display["Curvature / 曲率"].map('{:+.4%}'.format)
         
         all_tables.append((curve_names[i_curve], df_display))
 
@@ -446,7 +445,6 @@ GOATCOUNTER_SCRIPT = """
 <script data-goatcounter="https://mikhaelise.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 """
-# 使用 'gc_injected' 作为键
 if 'gc_injected' not in st.session_state:
     st.session_state.gc_injected = False
 
@@ -459,7 +457,6 @@ if not st.session_state.gc_injected:
 # ===== Google Analytics 代码 =====
 GA_ID = "G-NKZ1V5K6B3"
 
-# 使用 'ga_injected' 作为键 (确保与上面不同)
 if 'ga_injected' not in st.session_state:
     st.session_state.ga_injected = False
 
@@ -477,7 +474,7 @@ if not st.session_state.ga_injected:
     </script>
     """
     components.html(GA_SCRIPT, height=0)
-    st.session_state.ga_injected = True # <-- 确保这里设置的是 'ga_injected'
+    st.session_state.ga_injected = True
 # ===== Google Analytics 结束 =====
 
 st.sidebar.markdown("Made by mikhaElise")
@@ -495,127 +492,129 @@ except Exception as e:
     st.sidebar.error(f"Error loading image: {e}")
 
 st.sidebar.markdown("Bilibili: https://b23.tv/9aM3G4T")
-st.sidebar.header("Parameters")
+st.sidebar.header("Parameters / 参数")
 
 DECK_SIZE = st.sidebar.number_input(
-    "1. Total Deck Size (D)", 
+    "1. Total Deck Size (D) / 卡组总数", 
     min_value=40, 
     max_value=60, 
     value=60,
     step=1,
-    help="Set your total deck size (40-60)"
+    help="设置卡组总数 (40-60)"
 )
 HAND_SIZE = st.sidebar.number_input(
-    "2. Opening Hand Size (n)", 
+    "2. Opening Hand Size (n) / 起手手卡数", 
     min_value=0, 
     max_value=10, 
     value=5,
     step=1,
-    help="Set your opening hand size (0-10). Note: Part 3&4 calculations assume opening 5, drawing 1 (total 6 cards)."
+    help="设置起手抽几张牌 (0-10)。注意: Part 3 & 4 计算固定为起手5张，抽第6张。"
 )
 STARTER_COUNT_K = st.sidebar.number_input(
-    "3. Fixed Starter Count (K)",
+    "3. Fixed Starter Count (K) / 固定动点数",
     min_value=0,
     max_value=60,
     value=24,
     step=1,
-    help="Set the FIXED number of starters (K) for Part 2, 3 and 4 calculations."
+    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。"
 )
 
-st.title("YGO Opening Hand Probability Calculator")
-st.write(f"Current Settings: **{DECK_SIZE}** Card Deck, **{HAND_SIZE}** Card Hand")
-st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) = **{STARTER_COUNT_K}**")
+st.title("YGO Opening Hand Probability Calculator / YGO起手概率计算器")
+st.write(f"Current Settings / 当前设置: **{DECK_SIZE}** Card Deck / 卡组总数, **{HAND_SIZE}** Card Hand / 起手卡数")
+st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) / Part 2, 3 & 4 固定动点数 = **{STARTER_COUNT_K}**")
 
 
-st.header("Part 1: P(At least X Starter)")
-st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases.")
+st.header("Part 1: P(At least X Starter) / Part 1: 起手至少X张动点概率")
+st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中抽到特定数量动点的概率。")
 df_plot_1, df_table_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE)
 st.line_chart(df_plot_1)
-st.header(f"📊 Probability Table for P(X>=1) (K=1 to {DECK_SIZE})")
+st.header(f"📊 Probability Table for P(X>=1) (K=1 to {DECK_SIZE}) / P(X>=1) 概率表")
+st.write("Table shows Marginal (P(K) - P(K-1)) and Curvature (P(K+1) - 2P(K) + P(K-1)) for the P(X>=1) curve. / 表格显示 P(X>=1) 曲线的边际和曲率。")
 df_display_1 = df_table_1.copy()
-prob_col_name_1 = f"P(X>=1) (N={DECK_SIZE}, n={HAND_SIZE})"
+prob_col_name_1 = f"P(X>=1) (N={DECK_SIZE}, n={HAND_SIZE}) / 至少1张概率"
 df_display_1[prob_col_name_1] = df_display_1[prob_col_name_1].map('{:.4%}'.format)
-df_display_1["P(K) - P(K-1) (Marginal)"] = df_display_1["P(K) - P(K-1) (Marginal)"].map('{:+.4%}'.format)
-df_display_1["P(K+1)-2P(K)+P(K-1) (Curvature)"] = df_display_1["P(K+1)-2P(K)+P(K-1) (Curvature)"].map('{:+.4%}'.format)
+df_display_1["P(K) - P(K-1) (Marginal / 边际)"] = df_display_1["P(K) - P(K-1) (Marginal / 边际)"].map('{:+.4%}'.format)
+df_display_1["P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)"] = df_display_1["P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)"].map('{:+.4%}'.format)
 st.dataframe(df_display_1, use_container_width=True, height=300) 
 
 
 st.divider()
-st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide')")
-st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards).")
-st.caption("⚠️ Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards.")
+st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / Part 2: P(至少1动点 且 至少1杀虫剂)")
+st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards). / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**，显示随着卡组中“杀虫剂”(A) 数量 (X轴) 的增加，起手手牌 (n张) 中同时抽到至少1动点和至少1杀虫剂的概率变化。")
+st.caption("⚠️ Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards. / ⚠️ 假设：此计算假设动点 (K) 和杀虫剂 (A) 是完全不重叠的两组卡。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
-    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 else:
     df_plot_2, df_table_2 = get_combo_probability_data(DECK_SIZE, HAND_SIZE, STARTER_COUNT_K)
     st.line_chart(df_plot_2)
-    st.header(f"📊 Probability Table (A=0 to {DECK_SIZE - STARTER_COUNT_K})")
+    st.header(f"📊 Probability Table (A=0 to {DECK_SIZE - STARTER_COUNT_K}) / 概率表")
+    st.write("Table shows Probability, Marginal (P(A+1) - P(A)), and Curvature (P(A+1) - 2P(A) + P(A-1)). / 表格显示概率，边际和曲率。")
     df_display_2 = df_table_2.copy()
-    df_display_2["Probability"] = df_display_2["Probability"].map('{:.4%}'.format)
-    df_display_2["P(A+1) - P(A) (Marginal)"] = df_display_2["P(A+1) - P(A) (Marginal)"].map('{:+.4%}'.format)
-    df_display_2["P(A+1)-2P(A)+P(A-1) (Curvature)"] = df_display_2["P(A+1)-2P(A)+P(A-1) (Curvature)"].map('{:+.4%}'.format)
+    df_display_2["Probability / 概率"] = df_display_2["Probability / 概率"].map('{:.4%}'.format)
+    df_display_2["P(A+1) - P(A) (Marginal / 边际)"] = df_display_2["P(A+1) - P(A) (Marginal / 边际)"].map('{:+.4%}'.format)
+    df_display_2["P(A+1)-2P(A)+P(A-1) (Curvature / 曲率)"] = df_display_2["P(A+1)-2P(A)+P(A-1) (Curvature / 曲率)"].map('{:+.4%}'.format)
     
     st.dataframe(df_display_2, use_container_width=True, height=300)
 
 
 st.divider()
-st.header("Part 3, Chart 1: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6)")
-st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
-st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash)")
-st.caption("Note: Calculations are for opening 5, drawing 1 (total 6 cards).")
+st.header("Part 3, Chart 1: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6) / Part 3, 图1: P(抽5张含i张系统外 且 抽6张含>=1动点)")
+st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
+st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} 动点 + X轴 (系统外) + 剩余卡 (废件)")
+st.caption("Note: Calculations are for opening 5, drawing 1 (total 6 cards). / 注意：此部分计算固定为起手5张，抽第6张。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
-    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 else:
     max_NE = DECK_SIZE - STARTER_COUNT_K
     df_plot_3, all_tables_3 = get_part3_data(DECK_SIZE, STARTER_COUNT_K)
     
     st.line_chart(df_plot_3)
     
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE})")
-    st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
+    st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.header("Part 3, Chart 2: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6)")
-st.write(f"This chart shows the cumulative probability. It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
-st.caption("Note: Calculations assume opening 5, drawing 1 (total 6 cards).")
+st.header("Part 3, Chart 2: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6) / Part 3, 图2: P(抽5张含>=i张系统外 且 抽6张含>=1动点)")
+st.write(f"This chart shows the cumulative probability. It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表显示累积概率。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
+st.caption("Note: Calculations assume opening 5, drawing 1 (total 6 cards). / 注意：计算假设起手5张，抽第6张。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
-    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 else:
     max_NE_2 = DECK_SIZE - STARTER_COUNT_K
     df_plot_3_cumulative, all_tables_3_cumulative = get_part3_cumulative_data(DECK_SIZE, STARTER_COUNT_K)
     
     st.line_chart(df_plot_3_cumulative)
     
-    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2})")
-    st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
+    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
+    st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示累积概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3_cumulative:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards)")
-st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
-st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash)")
-st.caption("Note: Calculations are for drawing exactly 6 cards.")
+st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards) / Part 4: P(抽6张含i张系统外 且 6-i张动点)")
+st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表分析后攻抽完6张牌后的精确手牌构成。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
+st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} 动点 + X轴 (系统外) + 剩余卡 (废件)")
+st.caption("Note: Calculations are for drawing exactly 6 cards. / 注意：计算基于精确抽6张牌。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
-    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 else:
     max_NE_4 = DECK_SIZE - STARTER_COUNT_K
     df_plot_4, all_tables_4 = get_part4_data(DECK_SIZE, STARTER_COUNT_K)
     
     st.line_chart(df_plot_4)
     
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4})")
-    st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
+    st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"):
