@@ -14,44 +14,6 @@ st.set_page_config(
 )
 # --- 页面配置结束 ---
 
-# --- (新) 自定义深色主题 CSS ---
-dark_theme_css = """
-<style>
-    /* 主背景 */
-    .stApp {
-        background-color: #0E1117; /* Streamlit 默认深色背景 */
-        color: #FAFAFA; /* Streamlit 默认浅色文字 */
-    }
-    /* 侧边栏背景 */
-    [data-testid="stSidebar"] {
-        background-color: #1A1C24; /* 可以自定义稍浅或稍深的颜色 */
-    }
-    /* 确保文字颜色在所有地方都是亮的 */
-    body, h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown, .stTextInput > label, .stNumberInput > label, .stButton > button, div[data-testid="stExpander"] > div:first-child > details > summary {
-        color: #FAFAFA !important;
-    }
-    /* 调整链接颜色 */
-    a:link, a:visited {
-        color: #7aa0f5 !important; /* Streamlit 默认深色链接颜色 */
-    }
-    a:hover, a:active {
-        color: #AEC6FF !important; /* 悬停/激活时稍亮的颜色 */
-    }
-    /* 可选: 调整 metric 标签颜色 */
-    div[data-testid="stMetricLabel"] > div {
-         color: rgba(250, 250, 250, 0.6) !important; /* 稍暗的标签颜色 */
-    }
-    /* 可选: 调整 metric 数值颜色 */
-     div[data-testid="stMetricValue"] > div {
-         color: #FAFAFA !important;
-    }
-
-</style>
-"""
-st.markdown(dark_theme_css, unsafe_allow_html=True)
-# --- CSS 结束 ---
-
-
 @st.cache_data
 def safe_comb(n, k):
     if k < 0 or n < k or n < 0:
