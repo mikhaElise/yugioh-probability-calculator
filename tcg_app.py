@@ -229,7 +229,7 @@ def get_part3_data(D, K_fixed):
     df_plot[f"C2 (i=2 NE)"] = P_full[2][1 : max_NE + 2]
     df_plot[f"C3 (i=3 NE)"] = P_full[3][1 : max_NE + 2]
     df_plot[f"C4 (i=4 NE)"] = P_full[4][1 : max_NE + 2]
-    df_plot[f"C6 (i=5 NE, >=1 K)"] = P_full[5][1 : max_NE + 2]
+    df_plot[f"C6 (i=5 NE, 1 K)"] = P_full[5][1 : max_NE + 2]
     df_plot[f"C7 (i=5 NE, 0 K)"] = P_full[7][1 : max_NE + 2]
     
     df_plot = df_plot.set_index("NE (Non-Engine)")
