@@ -225,7 +225,9 @@ def calculate_part3_prob_single(NE, D, K_fixed, i):
 
         P_NOT_B_given_A_5 = P_k5_is_0_c7 * P_6th_not_K
         
-        final_prob = P_A_5 * P_NOT_B_given_A_5 
+        # Original code had P_A_5 * P_NOT_B_given_A_5 which seemed incorrect based on description
+        # Assuming the description "0 K in 6" means P(NOT B) overall for the condition A=5
+        final_prob = P_A_5 * P_NOT_B_given_A_5 # Keep calculation as P(A=5 AND Not B)
 
     return final_prob
 
@@ -370,15 +372,12 @@ def calculate_part4_prob_single(NE, D, K_fixed, i):
         return 0.0
         
     Trash = D - K_fixed - NE
-    if Trash < 0: 
-        if Trash == 0 and n_draw == i + j : pass
-        else: return 0.0
-
+    
     total_combinations = safe_comb(D, n_draw)
     if total_combinations == 0:
         return 0.0
 
-    ways_to_draw_exact = safe_comb(NE, i) * safe_comb(K_fixed, j) * safe_comb(Trash, 0) # Added C(Trash, 0) for clarity
+    ways_to_draw_exact = safe_comb(NE, i) * safe_comb(K_fixed, j) * safe_comb(Trash, 0)
     
     return ways_to_draw_exact / total_combinations
 
@@ -442,12 +441,16 @@ def get_part4_data(D, K_fixed):
 
 st.set_page_config(layout="wide")
 
-# ===== 插入改进后的GA代码在这里 =====
 GA_ID = "G-NKZ1V5K6B3"
 
-if not st.session_state.get('ga_injected', False):
+# --- (修正) 确保 components 已经被导入 ---
+# import streamlit.components.v1 as components # 应该在文件顶部导入
+
+if 'ga_injected' not in st.session_state:
+    st.session_state.ga_injected = False
+
+if not st.session_state.ga_injected:
     GA_SCRIPT = f"""
-    <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -461,10 +464,8 @@ if not st.session_state.get('ga_injected', False):
     """
     components.html(GA_SCRIPT, height=0)
     st.session_state.ga_injected = True
-# ===== GA代码结束 =====
 
-# 然后继续原有的侧边栏和主内容代码
-components.html(GA_SCRIPT)
+
 st.sidebar.markdown("Made by mikhaElise")
 
 try:
