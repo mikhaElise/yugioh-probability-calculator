@@ -522,7 +522,7 @@ STARTER_COUNT_K = st.sidebar.number_input(
     help="Set the FIXED number of starters (K) for Part 2, 3 and 4 calculations."
 )
 
-st.title("TCG Opening Hand Probability Calculator")
+st.title("YGO Opening Hand Probability Calculator")
 st.write(f"Current Settings: **{DECK_SIZE}** Card Deck, **{HAND_SIZE}** Card Hand")
 st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) = **{STARTER_COUNT_K}**")
 
