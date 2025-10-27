@@ -450,7 +450,7 @@ st.latex(r"P(X \geq x) = 1 - \sum_{i=0}^{x-1} \frac{\binom{K}{i} \binom{D-K}{n-i
 
 df_plot_1, all_tables_1, turning_points_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 
-# 使用 Altair 绘制图表，转折点使用高亮圆点
+# 使用 Altair 绘制图表，转折点使用与曲线相同颜色的高亮圆点
 df_plot_1_melted = df_plot_1.reset_index().melt('K (Starters)', var_name='Curve', value_name='Probability')
 base_chart_1 = alt.Chart(df_plot_1_melted).encode(
     x=alt.X('K (Starters):Q', title='K (Number of Starters in Deck)'),
@@ -470,13 +470,13 @@ for curve, (k_val, prob_val) in turning_points_1.items():
         'label': f'TP: K={k_val}'
     })
 
-# 绘制转折点圆点
+# 绘制转折点圆点（与对应曲线同色）
 if tp_data_1:
     tp_df_1 = pd.DataFrame(tp_data_1)
     points_1 = alt.Chart(tp_df_1).encode(
         x='K (Starters):Q',
         y='Probability:Q',
-        color=alt.value('red'),
+        color='Curve:N',  # 使用与曲线相同的颜色
         size=alt.value(100),
         tooltip=['label', alt.Tooltip('Probability', format='.4%')]
     ).mark_circle(stroke='black', strokeWidth=2)
@@ -486,16 +486,23 @@ if tp_data_1:
 else:
     st.altair_chart(lines_1.interactive(), use_container_width=True)
 
-# 边际效益分析
+# 边际效益分析 - 表格形式
 st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
-st.write("上图中红色圆点标示出了每条曲线上边际效益最高点 (The point of maximum marginal gain)。这代表在该点（K值）增加一张动点带来的概率提升是最大的。超过这个点后，每再增加一张动点，其带来的概率提升将开始减少（收益递减）。各曲线的转折点如下：")
+st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)，即增加一个单位带来的概率提升最大的点。")
 if turning_points_1:
-    tp_cols_1 = st.columns(len(turning_points_1))
-    i = 0
-    for curve, (k_val, _) in turning_points_1.items():
-        with tp_cols_1[i]:
-            st.metric(label=f"转折点: {curve.split('/')[0].strip()}", value=f"K = {k_val}")
-        i += 1
+    # 准备表格数据
+    table_data = []
+    for curve, (k_val, prob_val) in turning_points_1.items():
+        table_data.append({
+            "曲线": curve.split('/')[0].strip(),
+            "转折点": k_val,
+            "转折点概率": f"{prob_val:.4%}"
+        })
+    # 创建并显示表格
+    tp_df = pd.DataFrame(table_data)
+    st.dataframe(tp_df, use_container_width=True)
+else:
+    st.write("未找到有效的边际效益转折点。")
 
 if K_HIGHLIGHT in df_plot_1.index:
     highlight_data_1 = df_plot_1.loc[K_HIGHLIGHT]
@@ -587,13 +594,13 @@ else:
             'label': f'TP: NE={ne_val}'
         })
     
-    # 绘制转折点圆点
+    # 绘制转折点圆点（与对应曲线同色）
     if tp_data_3:
         tp_df_3 = pd.DataFrame(tp_data_3)
         points_3 = alt.Chart(tp_df_3).encode(
             x='NE (Non-Engine):Q',
             y='Probability:Q',
-            color=alt.value('red'),
+            color='Curve:N',  # 使用与曲线相同的颜色
             size=alt.value(100),
             tooltip=['label', alt.Tooltip('Probability', format='.4%')]
         ).mark_circle(stroke='black', strokeWidth=2)
@@ -602,16 +609,23 @@ else:
     else:
         st.altair_chart(lines_3.interactive(), use_container_width=True)
 
-    # 边际效益分析
+    # 边际效益分析 - 表格形式
     st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
-    st.write("上图中红色圆点标示了每条曲线收益递减的转折点。各曲线转折点如下：")
+    st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)。")
     if turning_points_3:
-        tp_cols_3 = st.columns(min(len(turning_points_3), 5)) # 避免过多列
-        i = 0
-        for curve, (ne_val, _) in turning_points_3.items():
-            with tp_cols_3[i % 5]:
-                st.metric(label=f"转折点: {curve.split('/')[0].strip()}", value=f"NE = {ne_val}")
-            i += 1
+        # 准备表格数据
+        table_data = []
+        for curve, (ne_val, prob_val) in turning_points_3.items():
+            table_data.append({
+                "曲线": curve.split('/')[0].strip(),
+                "转折点": ne_val,
+                "转折点概率": f"{prob_val:.4%}"
+            })
+        # 创建并显示表格
+        tp_df = pd.DataFrame(table_data)
+        st.dataframe(tp_df, use_container_width=True)
+    else:
+        st.write("未找到有效的边际效益转折点。")
     
     if NE_HIGHLIGHT in df_plot_3.index:
         highlight_data = df_plot_3.loc[NE_HIGHLIGHT]
@@ -656,13 +670,13 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
             'label': f'TP: NE={ne_val}'
         })
     
-    # 绘制转折点圆点
+    # 绘制转折点圆点（与对应曲线同色）
     if tp_data_3c:
         tp_df_3c = pd.DataFrame(tp_data_3c)
         points_3c = alt.Chart(tp_df_3c).encode(
             x='NE (Non-Engine):Q',
             y='Probability:Q',
-            color=alt.value('red'),
+            color='Curve:N',  # 使用与曲线相同的颜色
             size=alt.value(100),
             tooltip=['label', alt.Tooltip('Probability', format='.4%')]
         ).mark_circle(stroke='black', strokeWidth=2)
@@ -671,16 +685,23 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
     else:
         st.altair_chart(lines_3c.interactive(), use_container_width=True)
 
-    # 边际效益分析
+    # 边际效益分析 - 表格形式
     st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
-    st.write("上图中红色圆点标示了每条曲线收益递减的转折点。各曲线转折点如下：")
+    st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)。")
     if turning_points_3c:
-        tp_cols_3c = st.columns(len(turning_points_3c))
-        i = 0
-        for curve, (ne_val, _) in turning_points_3c.items():
-            with tp_cols_3c[i]:
-                st.metric(label=f"转折点: {curve.split('(')[0].strip()}", value=f"NE = {ne_val}")
-            i += 1
+        # 准备表格数据
+        table_data = []
+        for curve, (ne_val, prob_val) in turning_points_3c.items():
+            table_data.append({
+                "曲线": curve.split('(')[0].strip(),
+                "转折点": ne_val,
+                "转折点概率": f"{prob_val:.4%}"
+            })
+        # 创建并显示表格
+        tp_df = pd.DataFrame(table_data)
+        st.dataframe(tp_df, use_container_width=True)
+    else:
+        st.write("未找到有效的边际效益转折点。")
     
     if NE_HIGHLIGHT in df_plot_3_cumulative.index:
         highlight_data_cumul = df_plot_3_cumulative.loc[NE_HIGHLIGHT]
