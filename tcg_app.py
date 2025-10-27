@@ -5,12 +5,13 @@ import pandas as pd
 import math
 from PIL import Image
 
-# --- 页面配置 (移除 theme 参数) ---
+# --- 页面配置 (强制深色主题) ---
 st.set_page_config(
     layout="wide",
     page_title="YGO Prob Calc",
     page_icon="🎲",
-    initial_sidebar_state="auto" 
+    initial_sidebar_state="auto", # <-- 这里有逗号
+    theme="dark"                  # <-- theme="dark" 后面没有逗号，因为它是最后一个参数
 )
 # --- 页面配置结束 ---
 
