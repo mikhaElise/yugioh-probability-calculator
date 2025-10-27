@@ -740,7 +740,7 @@ st.caption("Note: Data is for reference only. / 注：数据仅供参考。") # 
 
 try:
     img_meme = Image.open("meme.png") 
-    target_width_meme = 400 
+    target_width_meme = 300 
     
     w_percent_meme = (target_width_meme / float(img_meme.size[0]))
     target_height_meme = int((float(img_meme.size[1]) * float(w_percent_meme)))
