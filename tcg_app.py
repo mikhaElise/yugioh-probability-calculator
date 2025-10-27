@@ -58,65 +58,53 @@ def get_starter_probability_data(N, n):
     
     plot_k_col = list(range(N + 1))
     
-    # --- Prepare data for all 5 curves + extended range for curvature ---
-    P_exact_full = [[calculate_exact_prob(i, k, N, n) for k in range(-1, N + 2)] for i in range(n + 1)] # i=0 to n, k=-1 to N+1
-    
-    P_cumulative_full = [[0.0] * (N + 3) for _ in range(n + 1)] # >=0 to >=n
+    P_exact_full = [[calculate_exact_prob(i, k, N, n) for k in range(-1, N + 2)] for i in range(n + 1)]
+    P_cumulative_full = [[0.0] * (N + 3) for _ in range(n + 1)]
 
-    for k_idx in range(N + 3): # from K=-1 to N+1
+    for k_idx in range(N + 3):
         p_sum = 0.0
-        # Calculate P(X >= i) by summing P(X = j) for j >= i
-        # More efficient: Calculate P(X < i) and subtract from 1, but this works too
-        for i in range(n, -1, -1): # i = n down to 0
+        for i in range(n, -1, -1):
              p_sum += P_exact_full[i][k_idx]
-             P_cumulative_full[i][k_idx] = p_sum # P_cumulative_full[i] stores P(X>=i)
+             P_cumulative_full[i][k_idx] = p_sum
 
-
-    # --- 1. Prepare Plot Data ---
     df_plot = pd.DataFrame({"K (Starters)": plot_k_col})
-    df_plot["P(X >= 1)"] = P_cumulative_full[1][1 : N + 2] # K=0 to N
+    df_plot["P(X >= 1)"] = P_cumulative_full[1][1 : N + 2]
     df_plot["P(X >= 2)"] = P_cumulative_full[2][1 : N + 2]
     df_plot["P(X >= 3)"] = P_cumulative_full[3][1 : N + 2]
     df_plot["P(X >= 4)"] = P_cumulative_full[4][1 : N + 2]
-    # For n=5, P(X>=5) is the same as P(X=5)
-    df_plot["P(X = 5)"] = P_exact_full[5][1 : N + 2] # Use P(X=5) directly
+    df_plot["P(X = 5)"] = P_exact_full[5][1 : N + 2]
     df_plot = df_plot.set_index("K (Starters)")
 
-    # --- 2. Prepare 5 Tables Data ---
     all_tables = []
     curve_names = [
         "P(X >= 1) / 至少1张动点",
         "P(X >= 2) / 至少2张动点",
         "P(X >= 3) / 至少3张动点",
         "P(X >= 4) / 至少4张动点",
-        "P(X = 5) / 正好5张动点" # P(X>=5) == P(X=5)
+        "P(X = 5) / 正好5张动点"
     ]
     
-    # Use P_cumulative_full for >=1 to >=4, P_exact_full for =5
     data_sources = [
         P_cumulative_full[1],
         P_cumulative_full[2],
         P_cumulative_full[3],
         P_cumulative_full[4],
-        P_exact_full[5] # Use exact prob for the last curve/table
+        P_exact_full[5]
     ]
 
-    for i_curve in range(5): # 0 to 4
-        
-        table_K_col = list(range(1, N + 1)) # K=1 to N for tables
-        P_curve = data_sources[i_curve] # Contains P(-1), P(0)... P(N+1)
-        
-        table_P_col = P_curve[2 : N + 2] # P(1) to P(N)
-        table_D_col = [P_curve[k+2] - P_curve[k+1] for k in range(len(table_K_col))] # P(K) - P(K-1)
-        table_C_col = [P_curve[k+3] - 2*P_curve[k+2] + P_curve[k+1] for k in range(len(table_K_col))] # P(K+1)-2P(K)+P(K-1)
+    for i_curve in range(5):
+        table_K_col = list(range(1, N + 1))
+        P_curve = data_sources[i_curve]
+        table_P_col = P_curve[2 : N + 2]
+        table_D_col = [P_curve[k+2] - P_curve[k+1] for k in range(len(table_K_col))]
+        table_C_col = [P_curve[k+3] - 2*P_curve[k+2] + P_curve[k+1] for k in range(len(table_K_col))]
         
         df_table = pd.DataFrame({
             "K (Starters / 动点)": table_K_col,
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
-        })
-        df_table = df_table.set_index("K (Starters / 动点)")
+        }).set_index("K (Starters / 动点)")
         
         df_display = df_table.copy()
         df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
@@ -125,7 +113,7 @@ def get_starter_probability_data(N, n):
         
         all_tables.append((curve_names[i_curve], df_display))
 
-    return df_plot, all_tables # Return plot df and list of table dfs
+    return df_plot, all_tables
 
 def calculate_combo_prob_single(A, D, n, K_fixed, total_comb, comb_not_K):
     if A < 0:
@@ -527,11 +515,24 @@ HAND_SIZE = st.sidebar.number_input(
 STARTER_COUNT_K = st.sidebar.number_input(
     "3. Fixed Starter Count (K) / 固定动点数",
     min_value=0,
-    max_value=60,
-    value=24,
+    max_value=DECK_SIZE, # Max K cannot exceed Deck Size
+    value=min(24, DECK_SIZE), # Default value also capped by Deck Size
     step=1,
     help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。"
 )
+
+# --- (新) NE 高亮输入框 ---
+max_ne_possible = DECK_SIZE - STARTER_COUNT_K
+NE_HIGHLIGHT = st.sidebar.number_input(
+    "4. Highlight NE Value / 高亮系统外数量 (用于 Part 3 & 4)",
+    min_value=0,
+    max_value=max_ne_possible if max_ne_possible >= 0 else 0, # Ensure max_value is not negative
+    value=min(9, max_ne_possible) if max_ne_possible >= 0 else 0, # Default to 9 or max possible
+    step=1,
+    help=f"输入一个 NE 值 (0 到 {max_ne_possible if max_ne_possible >= 0 else 0})，将在 Part 3 和 4 图表下方显示该点的精确概率。"
+)
+# --- 新输入框结束 ---
+
 
 st.title("YGO Opening Hand Probability Calculator / YGO起手概率计算器")
 st.write(f"Current Settings / 当前设置: **{DECK_SIZE}** Card Deck / 卡组总数, **{HAND_SIZE}** Card Hand / 起手卡数")
@@ -540,16 +541,14 @@ st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) / Part 2, 3 & 4 固定动点�
 
 st.header("Part 1: P(At least X Starter) / Part 1: 起手至少X张动点概率")
 st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中抽到特定数量动点的概率。")
-df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) # <-- 修改了返回值
+df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 st.line_chart(df_plot_1)
-st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") # <-- 修改了标题
-st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") # <-- 修改了描述
+st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
+st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
 
-# --- (新) Part 1 循环显示 5 个表格 ---
 for (table_name, table_data) in all_tables_1:
     with st.expander(f"**{table_name}**"):
         st.dataframe(table_data, use_container_width=True)
-# --- Part 1 表格修改结束 ---
 
 
 st.divider()
@@ -586,6 +585,20 @@ else:
     
     st.line_chart(df_plot_3)
     
+    # --- (新) 显示高亮点的概率 ---
+    if NE_HIGHLIGHT in df_plot_3.index:
+        highlight_data = df_plot_3.loc[NE_HIGHLIGHT]
+        st.write(f"**Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的概率:**")
+        cols = st.columns(len(highlight_data))
+        for i, (col_name, prob) in enumerate(highlight_data.items()):
+            with cols[i]:
+                # Extract the curve name (e.g., C0 (i=0 NE))
+                curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
+                st.metric(label=curve_label, value=f"{prob:.4%}")
+    else:
+        st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE})。")
+    # --- 高亮显示结束 ---
+
     st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
@@ -605,6 +618,19 @@ else:
     df_plot_3_cumulative, all_tables_3_cumulative = get_part3_cumulative_data(DECK_SIZE, STARTER_COUNT_K)
     
     st.line_chart(df_plot_3_cumulative)
+
+    # --- (新) 显示高亮点的概率 ---
+    if NE_HIGHLIGHT in df_plot_3_cumulative.index:
+        highlight_data_cumul = df_plot_3_cumulative.loc[NE_HIGHLIGHT]
+        st.write(f"**Cumulative Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的累积概率:**")
+        cols_cumul = st.columns(len(highlight_data_cumul))
+        for i, (col_name, prob) in enumerate(highlight_data_cumul.items()):
+             with cols_cumul[i]:
+                curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
+                st.metric(label=curve_label, value=f"{prob:.4%}")
+    else:
+        st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_2}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_2})。")
+    # --- 高亮显示结束 ---
     
     st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示累积概率，边际和曲率。")
@@ -626,6 +652,19 @@ else:
     df_plot_4, all_tables_4 = get_part4_data(DECK_SIZE, STARTER_COUNT_K)
     
     st.line_chart(df_plot_4)
+
+    # --- (新) 显示高亮点的概率 ---
+    if NE_HIGHLIGHT in df_plot_4.index:
+        highlight_data_4 = df_plot_4.loc[NE_HIGHLIGHT]
+        st.write(f"**Exact Hand Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的精确手牌概率:**")
+        cols_4 = st.columns(len(highlight_data_4))
+        for i, (col_name, prob) in enumerate(highlight_data_4.items()):
+            with cols_4[i]:
+                curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
+                st.metric(label=curve_label, value=f"{prob:.4%}")
+    else:
+         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_4}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_4})。")
+    # --- 高亮显示结束 ---
     
     st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
