@@ -167,83 +167,87 @@ def get_combo_probability_data(D, n, K_fixed):
 
 @st.cache_data
 def calculate_part3_prob_single(NE, D, K_fixed, i):
+    """
+    计算：5张手牌有i张系统外，6张牌中至少1张动点
+    """
     n = 5
-    n_plus_1 = 6
     
-    if K_fixed == 0 and i != 7:
-        return 0.0 
-    if NE < i and i != 7 : 
-        return 0.0
-    if NE < 5 and i == 7: 
-        return 0.0
-
-    Trash = D - K_fixed - NE
-    if Trash < 0 and i!=7: 
-        if NE >= (D-K_fixed): pass 
-        else: return 0.0
-    elif Trash < 0 and i==7: 
-         return 0.0
-
-    total_deck_draw_5 = safe_comb(D, n)
-    if total_deck_draw_5 == 0:
+    # 边界检查
+    if i < 0 or i > 5 or NE < 0 or K_fixed < 0 or D < n:
         return 0.0
     
-    non_NE_cards = D - NE
-    K_plus_Trash = D - NE
-
-    if i != 7: 
-        P_A_i_num = safe_comb(NE, i) * safe_comb(non_NE_cards, n - i)
-        P_A_i = P_A_i_num / total_deck_draw_5
-        if P_A_i == 0:
-            return 0.0
-
-        P_k5_is_0_num = safe_comb(Trash, n - i)
-        P_k5_is_0_den = safe_comb(K_plus_Trash, n - i)
-        if P_k5_is_0_den == 0:
-            P_k5_is_0 = 1.0 if P_k5_is_0_num == 0 else 0.0
-        else:
-            P_k5_is_0 = P_k5_is_0_num / P_k5_is_0_den
-
-        P_6th_not_K_num = (D - n) - K_fixed
-        P_6th_not_K_den = D - n
-        if P_6th_not_K_den <= 0: 
-             P_6th_not_K = 1.0
-        else:
-             P_6th_not_K = max(0.0, P_6th_not_K_num / P_6th_not_K_den) 
-
-
-        P_NOT_B_given_A_i = P_k5_is_0 * P_6th_not_K
-        P_B_given_A_i = 1.0 - P_NOT_B_given_A_i
-        final_prob = P_A_i * P_B_given_A_i
+    # 废件数量
+    Trash = D - NE - K_fixed
+    if Trash < 0:
+        return 0.0
     
-    else: 
-        i_actual = 5 
-        P_A_5_num = safe_comb(NE, i_actual) * safe_comb(non_NE_cards, n - i_actual)
-        P_A_5 = P_A_5_num / total_deck_draw_5
-        if P_A_5 == 0:
-            return 0.0
-            
-        P_k5_is_0_num_c7 = safe_comb(Trash, n - i_actual) 
-        P_k5_is_0_den_c7 = safe_comb(K_plus_Trash, n - i_actual) 
-        if P_k5_is_0_den_c7 == 0:
-             P_k5_is_0_c7 = 1.0 if P_k5_is_0_num_c7 == 0 else 0.0
-        else:
-             P_k5_is_0_c7 = P_k5_is_0_num_c7 / P_k5_is_0_den_c7
-
-
-        P_6th_not_K_num = (D - n) - K_fixed
-        P_6th_not_K_den = D - n
-        if P_6th_not_K_den <= 0:
-             P_6th_not_K = 1.0
-        else:
-             P_6th_not_K = max(0.0, P_6th_not_K_num / P_6th_not_K_den)
-
-        P_NOT_B_given_A_5 = P_k5_is_0_c7 * P_6th_not_K
+    total_comb_5 = safe_comb(D, n)
+    if total_comb_5 == 0:
+        return 0.0
+    
+    # 情况1：前5张已经抽到至少1张动点
+    prob_case1 = 0.0
+    for k in range(1, min(K_fixed, 5-i) + 1):  # k: 前5张中的动点数
+        if i + k <= 5:
+            # 前5张：i张系统外，k张动点，(5-i-k)张废件
+            ways = (safe_comb(NE, i) * 
+                   safe_comb(K_fixed, k) * 
+                   safe_comb(Trash, 5-i-k))
+            prob_case1 += ways / total_comb_5
+    
+    # 情况2：前5张没有动点，但第6抽是动点
+    # 前5张：i张系统外，0张动点，(5-i)张废件
+    if 5-i >= 0 and Trash >= 5-i:
+        ways_5cards = (safe_comb(NE, i) * 
+                      safe_comb(K_fixed, 0) * 
+                      safe_comb(Trash, 5-i))
+        prob_5cards = ways_5cards / total_comb_5 if total_comb_5 > 0 else 0.0
         
-        final_prob = P_A_5 * P_NOT_B_given_A_5 
+        # 第6抽是动点的概率
+        remaining_cards = D - 5
+        remaining_K = K_fixed  # 前5张没抽到动点
+        if remaining_cards > 0 and remaining_K > 0:
+            prob_6th_K = remaining_K / remaining_cards
+            prob_case2 = prob_5cards * prob_6th_K
+        else:
+            prob_case2 = 0.0
+    else:
+        prob_case2 = 0.0
+    
+    return prob_case1 + prob_case2
 
-    return final_prob
-
+@st.cache_data
+def calculate_part3_prob_single_case7(NE, D, K_fixed):
+    """
+    特殊情况：5张手牌有5张系统外，6张牌中0张动点
+    """
+    n = 5
+    
+    if NE < 5 or K_fixed == 0:
+        return 0.0
+    
+    Trash = D - NE - K_fixed
+    if Trash < 0:
+        return 0.0
+    
+    total_comb_5 = safe_comb(D, n)
+    if total_comb_5 == 0:
+        return 0.0
+    
+    # 前5张：5张系统外，0张动点，0张废件
+    ways_5cards = safe_comb(NE, 5) * safe_comb(K_fixed, 0) * safe_comb(Trash, 0)
+    prob_5cards = ways_5cards / total_comb_5
+    
+    # 第6抽不是动点的概率
+    remaining_cards = D - 5
+    remaining_K = K_fixed  # 前5张没抽到动点
+    if remaining_cards > 0:
+        prob_6th_not_K = (remaining_cards - remaining_K) / remaining_cards
+    else:
+        prob_6th_not_K = 1.0
+    
+    return prob_5cards * prob_6th_not_K
+   
 
 @st.cache_data
 def get_part3_data(D, K_fixed):
@@ -252,10 +256,11 @@ def get_part3_data(D, K_fixed):
     P_full = [[] for _ in range(8)]
 
     for ne_val in range(-1, max_NE + 2):
-        for i in range(0, 5):
+        # 计算 i=0 到 i=5 的情况
+        for i in range(0, 6):
             P_full[i].append(calculate_part3_prob_single(ne_val, D, K_fixed, i))
-        P_full[5].append(calculate_part3_prob_single(ne_val, D, K_fixed, 5))
-        P_full[7].append(calculate_part3_prob_single(ne_val, D, K_fixed, 7))
+        # 特殊情况 i=7 (5张系统外，0张动点)
+        P_full[7].append(calculate_part3_prob_single_case7(ne_val, D, K_fixed))
 
     plot_NE_col = list(range(max_NE + 1))
     df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
@@ -269,6 +274,7 @@ def get_part3_data(D, K_fixed):
     
     df_plot = df_plot.set_index("NE (Non-Engine)")
 
+    # 表格生成部分保持不变
     all_tables = []
     curve_names = [
         "C0: P(0 NE in 5, >=1 K in 6) / 抽5张含0系统外, 抽6张含>=1动点",
@@ -281,7 +287,6 @@ def get_part3_data(D, K_fixed):
     ]
     
     for i_curve_internal in [0, 1, 2, 3, 4, 5, 7]:
-        
         table_NE_col = list(range(max_NE + 1))
         P_curve = P_full[i_curve_internal]
         
@@ -306,6 +311,75 @@ def get_part3_data(D, K_fixed):
         all_tables.append((table_name, df_display))
 
     return df_plot, all_tables
+
+@st.cache_data
+def get_part3_cumulative_data(D, K_fixed):
+    max_NE = D - K_fixed
+    
+    # 使用新的计算函数
+    P_exact_full = [[calculate_part3_prob_single(ne_val, D, K_fixed, i) for ne_val in range(-1, max_NE + 2)] for i in range(6)] 
+
+    # 累积概率计算保持不变
+    P_cumulative_full = [[0.0] * (max_NE + 3) for _ in range(5)] 
+
+    for ne_idx in range(max_NE + 3): 
+        p0 = P_exact_full[0][ne_idx]
+        p1 = P_exact_full[1][ne_idx]
+        p2 = P_exact_full[2][ne_idx]
+        p3 = P_exact_full[3][ne_idx]
+        p4 = P_exact_full[4][ne_idx]
+        p5 = P_exact_full[5][ne_idx]
+        
+        P_cumulative_full[0][ne_idx] = p1 + p2 + p3 + p4 + p5 
+        P_cumulative_full[1][ne_idx] = p2 + p3 + p4 + p5      
+        P_cumulative_full[2][ne_idx] = p3 + p4 + p5           
+        P_cumulative_full[3][ne_idx] = p4 + p5                
+        P_cumulative_full[4][ne_idx] = p5                     
+
+    plot_NE_col = list(range(max_NE + 1))
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
+    df_plot[f"C_ge1 (>=1 NE)"] = P_cumulative_full[0][1 : max_NE + 2] 
+    df_plot[f"C_ge2 (>=2 NE)"] = P_cumulative_full[1][1 : max_NE + 2] 
+    df_plot[f"C_ge3 (>=3 NE)"] = P_cumulative_full[2][1 : max_NE + 2] 
+    df_plot[f"C_ge4 (>=4 NE)"] = P_cumulative_full[3][1 : max_NE + 2] 
+    df_plot[f"C_ge5 (>=5 NE)"] = P_cumulative_full[4][1 : max_NE + 2] 
+    df_plot = df_plot.set_index("NE (Non-Engine)")
+
+    # 表格生成部分保持不变
+    all_tables = []
+    curve_names = [
+        "C_ge1: P(>=1 NE in 5, >=1 K in 6) / 抽5张含>=1系统外, 抽6张含>=1动点",
+        "C_ge2: P(>=2 NE in 5, >=1 K in 6) / 抽5张含>=2系统外, 抽6张含>=1动点",
+        "C_ge3: P(>=3 NE in 5, >=1 K in 6) / 抽5张含>=3系统外, 抽6张含>=1动点",
+        "C_ge4: P(>=4 NE in 5, >=1 K in 6) / 抽5张含>=4系统外, 抽6张含>=1动点",
+        "C_ge5: P(>=5 NE in 5, >=1 K in 6) / 抽5张含>=5系统外, 抽6张含>=1动点",
+    ]
+
+    for i_curve in range(5): 
+        table_NE_col = list(range(max_NE + 1))
+        P_curve = P_cumulative_full[i_curve] 
+        
+        table_P_col = P_curve[1 : max_NE + 2] 
+        table_D_col = [P_curve[j+2] - P_curve[j+1] for j in range(len(table_NE_col))]
+        table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
+        
+        df_table = pd.DataFrame({
+            "NE (Non-Engine / 系统外)": table_NE_col, 
+            "Probability / 概率": table_P_col,
+            "Marginal / 边际": table_D_col,
+            "Curvature / 曲率": table_C_col
+        })
+        df_table = df_table.set_index("NE (Non-Engine / 系统外)")
+        
+        df_display = df_table.copy()
+        df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
+        df_display["Marginal / 边际"] = df_display["Marginal / 边际"].map('{:+.4%}'.format)
+        df_display["Curvature / 曲率"] = df_display["Curvature / 曲率"].map('{:+.4%}'.format)
+        
+        all_tables.append((curve_names[i_curve], df_display))
+
+    return df_plot, all_tables
+
 
 @st.cache_data
 def get_part3_cumulative_data(D, K_fixed):
