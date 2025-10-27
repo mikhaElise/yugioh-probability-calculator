@@ -441,23 +441,25 @@ def get_part4_data(D, K_fixed):
 
 st.set_page_config(layout="wide")
 
+# ===== GoatCounter 代码 =====
 GOATCOUNTER_SCRIPT = """
 <script data-goatcounter="https://mikhaelise.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 """
-# 使用 session state 防止重复注入
+# 使用 'gc_injected' 作为键
 if 'gc_injected' not in st.session_state:
     st.session_state.gc_injected = False
 
 if not st.session_state.gc_injected:
     components.html(GOATCOUNTER_SCRIPT, height=0)
     st.session_state.gc_injected = True
+# ===== GoatCounter 结束 =====
 
+
+# ===== Google Analytics 代码 =====
 GA_ID = "G-NKZ1V5K6B3"
 
-# --- (修正) 确保 components 已经被导入 ---
-# import streamlit.components.v1 as components # 应该在文件顶部导入
-
+# 使用 'ga_injected' 作为键 (确保与上面不同)
 if 'ga_injected' not in st.session_state:
     st.session_state.ga_injected = False
 
@@ -475,8 +477,8 @@ if not st.session_state.ga_injected:
     </script>
     """
     components.html(GA_SCRIPT, height=0)
-    st.session_state.ga_injected = True
-
+    st.session_state.ga_injected = True # <-- 确保这里设置的是 'ga_injected'
+# ===== Google Analytics 结束 =====
 
 st.sidebar.markdown("Made by mikhaElise")
 
