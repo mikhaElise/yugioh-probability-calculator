@@ -92,11 +92,11 @@ def get_starter_probability_data(N, n):
 
     df_plot = pd.DataFrame({
         "K (Starters / 动点)": plot_k_col,
-        "P(X >= 1 / 至少1张)": p_ge_1_list,
-        "P(X >= 2 / 至少2张)": p_ge_2_list,
-        "P(X >= 3 / 至少3张)": p_ge_3_list,
-        "P(X >= 4 / 至少4张)": p_ge_4_list,
-        "P(X = 5 / 正好5张)": p_eq_5_list
+        "P(X >= 1)": p_ge_1_list,
+        "P(X >= 2)": p_ge_2_list,
+        "P(X >= 3)": p_ge_3_list,
+        "P(X >= 4)": p_ge_4_list,
+        "P(X = 5)": p_eq_5_list
     }).set_index("K (Starters / 动点)")
 
     table_K_col = list(range(1, N + 1))
@@ -541,7 +541,6 @@ st.dataframe(df_display_1, use_container_width=True, height=300)
 st.divider()
 st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / Part 2: P(至少1动点 且 至少1杀虫剂)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards). / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**，显示随着卡组中“杀虫剂”(A) 数量 (X轴) 的增加，起手手牌 (n张) 中同时抽到至少1动点和至少1杀虫剂的概率变化。")
-st.caption("⚠️ Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards. / ⚠️ 假设：此计算假设动点 (K) 和杀虫剂 (A) 是完全不重叠的两组卡。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
