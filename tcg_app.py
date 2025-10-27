@@ -9,10 +9,10 @@ from PIL import Image
 st.set_page_config(
     layout="wide",
     page_title="YGO Prob Calc",
-    page_icon="🎲",
+    page_icon="🎲🎲",
     initial_sidebar_state="auto" # 让侧边栏状态更稳定
     # 默认情况下，Streamlit Cloud 会尝试匹配用户系统的主题（深色/浅色）
-    # 如果你想强制使用深色主题，取消下面一行的注释:
+    # 深色主题，取消下面一行的注释，但也行不通:
     # theme="dark"
 )
 # --- 页面配置结束 ---
@@ -453,7 +453,7 @@ def get_part4_data(D, K_fixed):
     return df_plot, all_tables
 
 # --- (修改) 设置页面配置，包括深色主题 ---
-st.set_page_config(layout="wide", page_title="YGO Prob Calc", page_icon="🎲") # Added title and icon
+st.set_page_config(layout="wide", page_title="YGO Prob Calc", page_icon="🎲🎲") # Added title and icon
 # --- 主题设置结束 ---
 
 
@@ -570,6 +570,16 @@ st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) / Part 2, 3 & 4 固定动点�
 
 st.header("Part 1: P(At least X Starter) / Part 1: 起手至少X张动点概率")
 st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中抽到特定数量动点的概率。")
+
+# --- Part 1 概率公式 ---
+st.subheader("Probability Formulas / 概率公式")
+st.latex(r"P(X \geq 1) = 1 - \frac{\binom{D-K}{n}}{\binom{D}{n}}")
+st.latex(r"P(X \geq 2) = 1 - \sum_{i=0}^{1} \frac{\binom{K}{i} \binom{D-K}{n-i}}{\binom{D}{n}}")
+st.latex(r"P(X \geq 3) = 1 - \sum_{i=0}^{2} \frac{\binom{K}{i} \binom{D-K}{n-i}}{\binom{D}{n}}")
+st.latex(r"P(X \geq 4) = 1 - \sum_{i=0}^{3} \frac{\binom{K}{i} \binom{D-K}{n-i}}{\binom{D}{n}}")
+st.latex(r"P(X = 5) = \frac{\binom{K}{5} \binom{D-K}{n-5}}{\binom{D}{n}}")
+st.caption("Where D = Deck Size, K = Starter Count, n = Hand Size / 其中 D = 卡组总数, K = 动点数, n = 起手数")
+
 df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 st.line_chart(df_plot_1)
 
@@ -590,7 +600,7 @@ else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 # --- Part 1 高亮结束 ---
 
-st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f"📊📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -600,7 +610,7 @@ for (table_name, table_data) in all_tables_1:
 
 st.divider()
 st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / Part 2: P(至少1动点 且 至少1杀虫剂)")
-st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards). / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**，显示随着卡组中“杀虫剂”(A) 数量 (X轴) 的增加，起手手牌 (n张) 中同时抽到至少1动点和至少1杀虫剂的概率变化。")
+st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards). / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**，显示随着卡组中"杀虫剂"(A) 数量 (X轴) 的增加，起手手牌 (n张) 中同时抽到至少1动点和至少1杀虫剂的概率变化。")
 st.caption("Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards. / 注：此计算假设动点 (K) 和杀虫剂 (A) 是完全不重叠的两组卡。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
@@ -610,9 +620,14 @@ else:
     if max_A_part2 < 0:
          st.warning("Warning: K is larger than Deck Size for Part 2 calculations. Results may be zero.")
     else:
+        # --- Part 2 概率公式 ---
+        st.subheader("Probability Formula / 概率公式")
+        st.latex(r"P(\text{At least 1 Starter AND At least 1 Insecticide}) = 1 - \frac{\binom{D-A}{n} + \binom{D-K}{n} - \binom{D-K-A}{n}}{\binom{D}{n}}")
+        st.caption("Where D = Deck Size, K = Starter Count, A = Insecticide Count, n = Hand Size / 其中 D = 卡组总数, K = 动点数, A = 杀虫剂数, n = 起手数")
+        
         df_plot_2, df_table_2 = get_combo_probability_data(DECK_SIZE, HAND_SIZE, STARTER_COUNT_K)
         st.line_chart(df_plot_2)
-        st.header(f"📊 Probability Table (A=0 to {max_A_part2}) / 概率表")
+        st.header(f"📊📊 Probability Table (A=0 to {max_A_part2}) / 概率表")
         st.write("Table shows Probability, Marginal (P(A+1) - P(A)), and Curvature (P(A+1) - 2P(A) + P(A-1)). / 表格显示概率，边际和曲率。")
         df_display_2 = df_table_2.copy()
         df_display_2["Probability / 概率"] = df_display_2["Probability / 概率"].map('{:.4%}'.format)
@@ -636,6 +651,13 @@ else:
     max_NE = max_ne_possible
     df_plot_3, all_tables_3 = get_part3_data(DECK_SIZE, STARTER_COUNT_K)
     
+    # --- Part 3 概率公式 ---
+    st.subheader("Probability Formulas / 概率公式")
+    st.latex(r"P(i \text{ NE in 5, } \geq 1 \text{ K in 6}) = P(A_i) \times (1 - P(\text{0 K in remaining cards} | A_i) \times P(\text{6th not K} | A_i))")
+    st.latex(r"P(A_i) = \frac{\binom{NE}{i} \binom{D-NE}{5-i}}{\binom{D}{5}}")
+    st.latex(r"P(\text{5 NE in 5, 0 K in 6}) = P(A_5) \times P(\text{0 K in remaining cards} | A_5) \times P(\text{6th not K} | A_5)")
+    st.caption("Where D = Deck Size, K = Starter Count, NE = Non-Engine Count / 其中 D = 卡组总数, K = 动点数, NE = 系统外数")
+    
     st.line_chart(df_plot_3)
     
     if NE_HIGHLIGHT in df_plot_3.index:
@@ -653,7 +675,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE})。")
 
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
+    st.header(f"📊📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3:
@@ -673,6 +695,11 @@ else:
     max_NE_2 = max_ne_possible
     df_plot_3_cumulative, all_tables_3_cumulative = get_part3_cumulative_data(DECK_SIZE, STARTER_COUNT_K)
     
+    # --- Part 3 累积概率公式 ---
+    st.subheader("Probability Formulas / 概率公式")
+    st.latex(r"P(\geq i \text{ NE in 5, } \geq 1 \text{ K in 6}) = \sum_{j=i}^{5} P(j \text{ NE in 5, } \geq 1 \text{ K in 6})")
+    st.caption("Cumulative probabilities are sums of the corresponding exact probabilities from Chart 1 / 累积概率是图1中相应精确概率的和")
+    
     st.line_chart(df_plot_3_cumulative)
 
     if NE_HIGHLIGHT in df_plot_3_cumulative.index:
@@ -690,7 +717,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_2}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_2})。")
     
-    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
+    st.header(f"📊📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示累积概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3_cumulative:
@@ -711,6 +738,11 @@ else:
     max_NE_4 = max_ne_possible
     df_plot_4, all_tables_4 = get_part4_data(DECK_SIZE, STARTER_COUNT_K)
     
+    # --- Part 4 概率公式 ---
+    st.subheader("Probability Formula / 概率公式")
+    st.latex(r"P(i \text{ NE, } 6-i \text{ K in 6}) = \frac{\binom{NE}{i} \binom{K}{6-i} \binom{D-K-NE}{0}}{\binom{D}{6}}")
+    st.caption("Where D = Deck Size, K = Starter Count, NE = Non-Engine Count / 其中 D = 卡组总数, K = 动点数, NE = 系统外数")
+    
     st.line_chart(df_plot_4)
 
     if NE_HIGHLIGHT in df_plot_4.index:
@@ -728,7 +760,7 @@ else:
     else:
          st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_4}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_4})。")
     
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
+    st.header(f"📊📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_4:
