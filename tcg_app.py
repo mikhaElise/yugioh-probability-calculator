@@ -32,20 +32,47 @@ def calculate_single_prob(K, N, n):
     return 1.0 - prob_zero_starters
 
 @st.cache_data
+def calculate_exact_prob(i, K, N, n):
+    if n == 0:
+        return 0.0
+    if K < i:
+        return 0.0
+    
+    total_combinations = safe_comb(N, n)
+    if total_combinations == 0:
+        return 0.0
+    
+    non_starters = N - K
+    draw_non_starters = n - i
+    if draw_non_starters < 0:
+        return 0.0
+    
+    ways_to_draw_exact = safe_comb(K, i) * safe_comb(non_starters, draw_non_starters)
+    
+    return ways_to_draw_exact / total_combinations
+
+@st.cache_data
 def get_starter_probability_data(N, n):
-    P_values_full = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)]
     
     plot_k_col = list(range(N + 1))
-    plot_p_col = P_values_full[1 : N + 2]
+    
+    P_values_full_ge_1 = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)]
+    plot_p_ge_1 = P_values_full_ge_1[1 : N + 2]
+    
+    plot_p_eq_2 = [calculate_exact_prob(2, k, N, n) for k in plot_k_col]
+    plot_p_eq_3 = [calculate_exact_prob(3, k, N, n) for k in plot_k_col]
+    
     df_plot = pd.DataFrame({
         "K (Starters)": plot_k_col,
-        "Probability": plot_p_col
+        "P(X >= 1)": plot_p_ge_1,
+        "P(X = 2)": plot_p_eq_2,
+        "P(X = 3)": plot_p_eq_3
     }).set_index("K (Starters)")
 
     table_K_col = list(range(1, N + 1))
-    table_P_col = P_values_full[2 : N + 2]
-    table_D_col = [P_values_full[i+2] - P_values_full[i+1] for i in range(len(table_K_col))]
-    table_C_col = [P_values_full[i+3] - 2*P_values_full[i+2] + P_values_full[i+1] for i in range(len(table_K_col))]
+    table_P_col = P_values_full_ge_1[2 : N + 2]
+    table_D_col = [P_values_full_ge_1[i+2] - P_values_full_ge_1[i+1] for i in range(len(table_K_col))]
+    table_C_col = [P_values_full_ge_1[i+3] - 2*P_values_full_ge_1[i+2] + P_values_full_ge_1[i+1] for i in range(len(table_K_col))]
 
     df_table = pd.DataFrame({
         "K (Starters)": table_K_col,
@@ -53,6 +80,7 @@ def get_starter_probability_data(N, n):
         "P(K) - P(K-1) (Marginal)": table_D_col,
         "P(K+1)-2P(K)+P(K-1) (Curvature)": table_C_col
     }).set_index("K (Starters)") 
+    
     return df_plot, df_table
 
 def calculate_combo_prob_single(A, D, n, K_fixed, total_comb, comb_not_K):
