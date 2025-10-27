@@ -62,7 +62,7 @@ def get_starter_probability_data(N, n):
     p_ge_4_list = []
     p_eq_5_list = []
     
-    p_ge_1_full_for_table = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)] # Needed for table curvature
+    p_ge_1_full_for_table = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)] 
 
     for k_val in plot_k_col:
         p_eq_0 = calculate_exact_prob(0, k_val, N, n)
@@ -70,7 +70,7 @@ def get_starter_probability_data(N, n):
         p_eq_2 = calculate_exact_prob(2, k_val, N, n)
         p_eq_3 = calculate_exact_prob(3, k_val, N, n)
         p_eq_4 = calculate_exact_prob(4, k_val, N, n)
-        p_eq_5 = calculate_exact_prob(5, k_val, N, n) # Also P(X>=5) since n=5
+        p_eq_5 = calculate_exact_prob(5, k_val, N, n) 
 
         p_lt_1 = p_eq_0
         p_lt_2 = p_eq_0 + p_eq_1
@@ -156,59 +156,78 @@ def calculate_part3_prob_single(NE, D, K_fixed, i):
     
     if K_fixed == 0 and i != 7:
         return 0.0 
-    if NE < i:
+    if NE < i and i != 7 : 
         return 0.0
-    
+    if NE < 5 and i == 7: 
+        return 0.0
+
     Trash = D - K_fixed - NE
-    if Trash < 0:
-        return 0.0
-        
+    if Trash < 0 and i!=7: 
+        if NE >= (D-K_fixed): pass 
+        else: return 0.0
+    elif Trash < -i and i==7: 
+         return 0.0
+
     total_deck_draw_5 = safe_comb(D, n)
     if total_deck_draw_5 == 0:
         return 0.0
     
     non_NE_cards = D - NE
     K_plus_Trash = D - NE
-    P_A_i_num = safe_comb(NE, i) * safe_comb(non_NE_cards, n - i)
-    P_A_i = P_A_i_num / total_deck_draw_5
-    if P_A_i == 0:
-        return 0.0
 
-    P_k5_is_0_num = safe_comb(Trash, n - i)
-    P_k5_is_0_den = safe_comb(K_plus_Trash, n - i)
-    if P_k5_is_0_den == 0:
-        P_k5_is_0 = 1.0 if P_k5_is_0_num == 0 else 0.0
-    else:
-        P_k5_is_0 = P_k5_is_0_num / P_k5_is_0_den
+    if i != 7: 
+        P_A_i_num = safe_comb(NE, i) * safe_comb(non_NE_cards, n - i)
+        P_A_i = P_A_i_num / total_deck_draw_5
+        if P_A_i == 0:
+            return 0.0
 
-    P_6th_not_K_num = (D - n) - K_fixed
-    P_6th_not_K_den = D - n
-    if P_6th_not_K_den == 0:
-        P_6th_not_K = 1.0
-    else:
-        P_6th_not_K = P_6th_not_K_num / P_6th_not_K_den
+        P_k5_is_0_num = safe_comb(Trash, n - i)
+        P_k5_is_0_den = safe_comb(K_plus_Trash, n - i)
+        if P_k5_is_0_den == 0:
+            P_k5_is_0 = 1.0 if P_k5_is_0_num == 0 else 0.0
+        else:
+            P_k5_is_0 = P_k5_is_0_num / P_k5_is_0_den
 
-    P_NOT_B_given_A_i = P_k5_is_0 * P_6th_not_K
+        P_6th_not_K_num = (D - n) - K_fixed
+        P_6th_not_K_den = D - n
+        if P_6th_not_K_den <= 0: 
+             P_6th_not_K = 1.0
+        else:
+             P_6th_not_K = max(0.0, P_6th_not_K_num / P_6th_not_K_den) 
+
+
+        P_NOT_B_given_A_i = P_k5_is_0 * P_6th_not_K
+        P_B_given_A_i = 1.0 - P_NOT_B_given_A_i
+        final_prob = P_A_i * P_B_given_A_i
     
-    P_B_given_A_i = 1.0 - P_NOT_B_given_A_i
-    
-    final_prob = P_A_i * P_B_given_A_i
-    
-    if i == 7:
-        P_A_5_num = safe_comb(NE, 5) * safe_comb(non_NE_cards, 0)
+    else: 
+        i_actual = 5 
+        P_A_5_num = safe_comb(NE, i_actual) * safe_comb(non_NE_cards, n - i_actual)
         P_A_5 = P_A_5_num / total_deck_draw_5
         if P_A_5 == 0:
             return 0.0
             
-        P_k5_is_0_num_c7 = safe_comb(Trash, 0)
-        P_k5_is_0_den_c7 = safe_comb(K_plus_Trash, 0)
-        P_k5_is_0_c7 = 1.0
-        
+        P_k5_is_0_num_c7 = safe_comb(Trash, n - i_actual) 
+        P_k5_is_0_den_c7 = safe_comb(K_plus_Trash, n - i_actual) 
+        if P_k5_is_0_den_c7 == 0:
+             P_k5_is_0_c7 = 1.0 if P_k5_is_0_num_c7 == 0 else 0.0
+        else:
+             P_k5_is_0_c7 = P_k5_is_0_num_c7 / P_k5_is_0_den_c7
+
+
+        P_6th_not_K_num = (D - n) - K_fixed
+        P_6th_not_K_den = D - n
+        if P_6th_not_K_den <= 0:
+             P_6th_not_K = 1.0
+        else:
+             P_6th_not_K = max(0.0, P_6th_not_K_num / P_6th_not_K_den)
+
         P_NOT_B_given_A_5 = P_k5_is_0_c7 * P_6th_not_K
         
-        return P_A_5 * P_NOT_B_given_A_5
+        final_prob = P_A_5 * P_NOT_B_given_A_5 
 
     return final_prob
+
 
 @st.cache_data
 def get_part3_data(D, K_fixed):
@@ -229,7 +248,7 @@ def get_part3_data(D, K_fixed):
     df_plot[f"C2 (i=2 NE)"] = P_full[2][1 : max_NE + 2]
     df_plot[f"C3 (i=3 NE)"] = P_full[3][1 : max_NE + 2]
     df_plot[f"C4 (i=4 NE)"] = P_full[4][1 : max_NE + 2]
-    df_plot[f"C6 (i=5 NE, 1 K)"] = P_full[5][1 : max_NE + 2]
+    df_plot[f"C6 (i=5 NE, >=1 K)"] = P_full[5][1 : max_NE + 2]
     df_plot[f"C7 (i=5 NE, 0 K)"] = P_full[7][1 : max_NE + 2]
     
     df_plot = df_plot.set_index("NE (Non-Engine)")
@@ -272,6 +291,70 @@ def get_part3_data(D, K_fixed):
 
     return df_plot, all_tables
 
+@st.cache_data
+def get_part3_cumulative_data(D, K_fixed):
+    max_NE = D - K_fixed
+    
+    P_exact_full = [[calculate_part3_prob_single(ne_val, D, K_fixed, i) for ne_val in range(-1, max_NE + 2)] for i in range(6)] 
+
+    P_cumulative_full = [[0.0] * (max_NE + 3) for _ in range(5)] 
+
+    for ne_idx in range(max_NE + 3): 
+        p0 = P_exact_full[0][ne_idx]
+        p1 = P_exact_full[1][ne_idx]
+        p2 = P_exact_full[2][ne_idx]
+        p3 = P_exact_full[3][ne_idx]
+        p4 = P_exact_full[4][ne_idx]
+        p5 = P_exact_full[5][ne_idx]
+        
+        P_cumulative_full[0][ne_idx] = p1 + p2 + p3 + p4 + p5 
+        P_cumulative_full[1][ne_idx] = p2 + p3 + p4 + p5      
+        P_cumulative_full[2][ne_idx] = p3 + p4 + p5           
+        P_cumulative_full[3][ne_idx] = p4 + p5                
+        P_cumulative_full[4][ne_idx] = p5                     
+
+    plot_NE_col = list(range(max_NE + 1))
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col})
+    df_plot[f"C_ge1 (>=1 NE)"] = P_cumulative_full[0][1 : max_NE + 2]
+    df_plot[f"C_ge2 (>=2 NE)"] = P_cumulative_full[1][1 : max_NE + 2]
+    df_plot[f"C_ge3 (>=3 NE)"] = P_cumulative_full[2][1 : max_NE + 2]
+    df_plot[f"C_ge4 (>=4 NE)"] = P_cumulative_full[3][1 : max_NE + 2]
+    df_plot[f"C_ge5 (>=5 NE)"] = P_cumulative_full[4][1 : max_NE + 2]
+    df_plot = df_plot.set_index("NE (Non-Engine)")
+
+    all_tables = []
+    curve_names = [
+        "C_ge1: P(>=1 NE in 5, >=1 K in 6)",
+        "C_ge2: P(>=2 NE in 5, >=1 K in 6)",
+        "C_ge3: P(>=3 NE in 5, >=1 K in 6)",
+        "C_ge4: P(>=4 NE in 5, >=1 K in 6)",
+        "C_ge5: P(>=5 NE in 5, >=1 K in 6)",
+    ]
+
+    for i_curve in range(5): 
+        table_NE_col = list(range(max_NE + 1))
+        P_curve = P_cumulative_full[i_curve] 
+        
+        table_P_col = P_curve[1 : max_NE + 2] 
+        table_D_col = [P_curve[j+2] - P_curve[j+1] for j in range(len(table_NE_col))]
+        table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
+        
+        df_table = pd.DataFrame({
+            "NE (Non-Engine)": table_NE_col,
+            "Probability": table_P_col,
+            "Marginal": table_D_col,
+            "Curvature": table_C_col
+        })
+        df_table = df_table.set_index("NE (Non-Engine)")
+        
+        df_display = df_table.copy()
+        df_display["Probability"] = df_display["Probability"].map('{:.4%}'.format)
+        df_display["Marginal"] = df_display["Marginal"].map('{:+.4%}'.format)
+        df_display["Curvature"] = df_display["Curvature"].map('{:+.4%}'.format)
+        
+        all_tables.append((curve_names[i_curve], df_display))
+
+    return df_plot, all_tables
 
 st.set_page_config(layout="wide")
 
@@ -355,7 +438,7 @@ else:
 
 
 st.divider()
-st.header("Part 3: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6)")
+st.header("Part 3, Chart 1: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash)")
 st.caption("Note: Calculations for this part are hard-coded for an opening hand of 5, drawing a 6th card.")
@@ -372,5 +455,25 @@ else:
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
 
     for (table_name, table_data) in all_tables_3:
+        with st.expander(f"**{table_name}**"):
+            st.dataframe(table_data, use_container_width=True)
+
+st.divider()
+st.header("Part 3, Chart 2: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6)")
+st.write(f"This chart shows the cumulative probability. It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
+st.caption("Note: Calculations assume opening 5, drawing 1.")
+
+if STARTER_COUNT_K >= DECK_SIZE:
+    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+else:
+    max_NE_2 = DECK_SIZE - STARTER_COUNT_K
+    df_plot_3_cumulative, all_tables_3_cumulative = get_part3_cumulative_data(DECK_SIZE, STARTER_COUNT_K)
+    
+    st.line_chart(df_plot_3_cumulative)
+    
+    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2})")
+    st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
+
+    for (table_name, table_data) in all_tables_3_cumulative:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
