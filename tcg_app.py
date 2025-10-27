@@ -5,15 +5,52 @@ import pandas as pd
 import math
 from PIL import Image
 
-# --- 页面配置 (强制深色主题) ---
+# --- 页面配置 (移除 theme 参数) ---
 st.set_page_config(
     layout="wide",
     page_title="YGO Prob Calc",
     page_icon="🎲",
-    initial_sidebar_state="auto", # <-- 这里有逗号
-    theme="dark"                  # <-- theme="dark" 后面没有逗号，因为它是最后一个参数
+    initial_sidebar_state="auto"
 )
 # --- 页面配置结束 ---
+
+# --- (新) 自定义深色主题 CSS ---
+dark_theme_css = """
+<style>
+    /* 主背景 */
+    .stApp {
+        background-color: #0E1117; /* Streamlit 默认深色背景 */
+        color: #FAFAFA; /* Streamlit 默认浅色文字 */
+    }
+    /* 侧边栏背景 */
+    [data-testid="stSidebar"] {
+        background-color: #1A1C24; /* 可以自定义稍浅或稍深的颜色 */
+    }
+    /* 确保文字颜色在所有地方都是亮的 */
+    body, h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown, .stTextInput > label, .stNumberInput > label, .stButton > button, div[data-testid="stExpander"] > div:first-child > details > summary {
+        color: #FAFAFA !important;
+    }
+    /* 调整链接颜色 */
+    a:link, a:visited {
+        color: #7aa0f5 !important; /* Streamlit 默认深色链接颜色 */
+    }
+    a:hover, a:active {
+        color: #AEC6FF !important; /* 悬停/激活时稍亮的颜色 */
+    }
+    /* 可选: 调整 metric 标签颜色 */
+    div[data-testid="stMetricLabel"] > div {
+         color: rgba(250, 250, 250, 0.6) !important; /* 稍暗的标签颜色 */
+    }
+    /* 可选: 调整 metric 数值颜色 */
+     div[data-testid="stMetricValue"] > div {
+         color: #FAFAFA !important;
+    }
+
+</style>
+"""
+st.markdown(dark_theme_css, unsafe_allow_html=True)
+# --- CSS 结束 ---
+
 
 @st.cache_data
 def safe_comb(n, k):
@@ -450,9 +487,50 @@ def get_part4_data(D, K_fixed):
 
     return df_plot, all_tables
 
-# --- (修改) 设置页面配置，包括深色主题 ---
-st.set_page_config(layout="wide", page_title="YGO Prob Calc", page_icon="🎲") # Added title and icon
-# --- 主题设置结束 ---
+st.set_page_config(
+    layout="wide",
+    page_title="YGO Prob Calc",
+    page_icon="🎲",
+    initial_sidebar_state="auto"
+)
+
+
+# --- 自定义深色主题 CSS ---
+dark_theme_css = """
+<style>
+    /* 主背景 */
+    .stApp {
+        background-color: #0E1117; /* Streamlit 默认深色背景 */
+        color: #FAFAFA; /* Streamlit 默认浅色文字 */
+    }
+    /* 侧边栏背景 */
+    [data-testid="stSidebar"] {
+        background-color: #1A1C24; /* 可以自定义稍浅或稍深的颜色 */
+    }
+    /* 确保文字颜色在所有地方都是亮的 */
+    body, h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown, .stTextInput > label, .stNumberInput > label, .stButton > button, div[data-testid="stExpander"] > div:first-child > details > summary {
+        color: #FAFAFA !important;
+    }
+    /* 调整链接颜色 */
+    a:link, a:visited {
+        color: #7aa0f5 !important; /* Streamlit 默认深色链接颜色 */
+    }
+    a:hover, a:active {
+        color: #AEC6FF !important; /* 悬停/激活时稍亮的颜色 */
+    }
+    /* 可选: 调整 metric 标签颜色 */
+    div[data-testid="stMetricLabel"] > div {
+         color: rgba(250, 250, 250, 0.6) !important; /* 稍暗的标签颜色 */
+    }
+    /* 可选: 调整 metric 数值颜色 */
+     div[data-testid="stMetricValue"] > div {
+         color: #FAFAFA !important;
+    }
+
+</style>
+"""
+st.markdown(dark_theme_css, unsafe_allow_html=True)
+# --- CSS 结束 ---
 
 
 # ===== GoatCounter 代码 =====
@@ -492,21 +570,20 @@ if not st.session_state.ga_injected:
     st.session_state.ga_injected = True
 # ===== Google Analytics 结束 =====
 
-# --- (修改) 头像和署名顺序 ---
+# --- 侧边栏 ---
 try:
     img = Image.open("avatar.png") 
     target_width = 150
     w_percent = (target_width / float(img.size[0]))
     target_height = int((float(img.size[1]) * float(w_percent)))
     img_resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-    st.sidebar.image(img_resized) # 先显示图片
+    st.sidebar.image(img_resized) 
 except FileNotFoundError:
     st.sidebar.caption("avatar.png not found. (Place it in the same folder as the script)")
 except Exception as e:
     st.sidebar.error(f"Error loading image: {e}")
 
-st.sidebar.markdown("Made by mikhaElise") # 后显示署名
-# --- 修改结束 ---
+st.sidebar.markdown("Made by mikhaElise") 
 
 st.sidebar.markdown("Bilibili: https://b23.tv/9aM3G4T")
 st.sidebar.header("Parameters / 参数")
@@ -528,7 +605,7 @@ HAND_SIZE = st.sidebar.number_input(
     help="设置起手抽几张牌 (0-10)。注意: Part 3 & 4 计算固定为起手5张，抽第6张。"
 )
 STARTER_COUNT_K = st.sidebar.number_input(
-    "3. Starter Size (K) / 动点数", # <-- Label changed
+    "3. Starter Size (K) / 动点数", 
     min_value=0,
     max_value=DECK_SIZE, 
     value=min(17, DECK_SIZE), 
@@ -536,7 +613,6 @@ STARTER_COUNT_K = st.sidebar.number_input(
     help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。" 
 )
 
-# --- (新) K 高亮输入框 ---
 K_HIGHLIGHT = st.sidebar.number_input(
     "4. Highlight Starter Value (K) / 高亮动点数 (用于 Part 1)",
     min_value=0,
@@ -545,14 +621,13 @@ K_HIGHLIGHT = st.sidebar.number_input(
     step=1,
     help=f"输入一个 K 值 (0 到 {DECK_SIZE})，将在 Part 1 图表下方显示该点的精确概率。"
 )
-# --- 新输入框结束 ---
 
 
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
 max_ne_possible = max(0, max_ne_possible) 
 
 NE_HIGHLIGHT = st.sidebar.number_input(
-    "5. Non-engine Size（NE）/系统外数量", # <-- Number adjusted
+    "5. Non-engine Size（NE）/系统外数量", 
     min_value=0,
     max_value=max_ne_possible, 
     value=min(20, max_ne_possible), 
@@ -571,7 +646,6 @@ st.write("This chart shows the probability of drawing specific numbers of 'Start
 df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 st.line_chart(df_plot_1)
 
-# --- (新) Part 1 高亮显示 ---
 if K_HIGHLIGHT in df_plot_1.index:
     highlight_data_1 = df_plot_1.loc[K_HIGHLIGHT]
     st.write(f"**Probabilities for K = {K_HIGHLIGHT} / K = {K_HIGHLIGHT} 时的概率:**")
@@ -586,7 +660,6 @@ if K_HIGHLIGHT in df_plot_1.index:
                 col_idx_1 += 1
 else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
-# --- Part 1 高亮结束 ---
 
 st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
@@ -734,7 +807,7 @@ else:
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.caption("Note: Data is for reference only. / 注：数据仅供参考。") # <-- Order reversed
+st.caption("Note: Data is for reference only. / 注：数据仅供参考。") 
 
 try:
     img_meme = Image.open("meme.png") 
