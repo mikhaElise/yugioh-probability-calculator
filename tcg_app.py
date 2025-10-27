@@ -56,23 +56,51 @@ def get_starter_probability_data(N, n):
     
     plot_k_col = list(range(N + 1))
     
-    P_values_full_ge_1 = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)]
-    plot_p_ge_1 = P_values_full_ge_1[1 : N + 2]
+    p_ge_1_list = []
+    p_ge_2_list = []
+    p_ge_3_list = []
+    p_ge_4_list = []
+    p_eq_5_list = []
     
-    plot_p_eq_2 = [calculate_exact_prob(2, k, N, n) for k in plot_k_col]
-    plot_p_eq_3 = [calculate_exact_prob(3, k, N, n) for k in plot_k_col]
-    
+    p_ge_1_full_for_table = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)] # Needed for table curvature
+
+    for k_val in plot_k_col:
+        p_eq_0 = calculate_exact_prob(0, k_val, N, n)
+        p_eq_1 = calculate_exact_prob(1, k_val, N, n)
+        p_eq_2 = calculate_exact_prob(2, k_val, N, n)
+        p_eq_3 = calculate_exact_prob(3, k_val, N, n)
+        p_eq_4 = calculate_exact_prob(4, k_val, N, n)
+        p_eq_5 = calculate_exact_prob(5, k_val, N, n) # Also P(X>=5) since n=5
+
+        p_lt_1 = p_eq_0
+        p_lt_2 = p_eq_0 + p_eq_1
+        p_lt_3 = p_eq_0 + p_eq_1 + p_eq_2
+        p_lt_4 = p_eq_0 + p_eq_1 + p_eq_2 + p_eq_3
+        
+        p_ge_1 = 1.0 - p_lt_1
+        p_ge_2 = 1.0 - p_lt_2
+        p_ge_3 = 1.0 - p_lt_3
+        p_ge_4 = 1.0 - p_lt_4
+        
+        p_ge_1_list.append(p_ge_1)
+        p_ge_2_list.append(p_ge_2)
+        p_ge_3_list.append(p_ge_3)
+        p_ge_4_list.append(p_ge_4)
+        p_eq_5_list.append(p_eq_5)
+
     df_plot = pd.DataFrame({
         "K (Starters)": plot_k_col,
-        "P(X >= 1)": plot_p_ge_1,
-        "P(X = 2)": plot_p_eq_2,
-        "P(X = 3)": plot_p_eq_3
+        "P(X >= 1)": p_ge_1_list,
+        "P(X >= 2)": p_ge_2_list,
+        "P(X >= 3)": p_ge_3_list,
+        "P(X >= 4)": p_ge_4_list,
+        "P(X = 5)": p_eq_5_list
     }).set_index("K (Starters)")
 
     table_K_col = list(range(1, N + 1))
-    table_P_col = P_values_full_ge_1[2 : N + 2]
-    table_D_col = [P_values_full_ge_1[i+2] - P_values_full_ge_1[i+1] for i in range(len(table_K_col))]
-    table_C_col = [P_values_full_ge_1[i+3] - 2*P_values_full_ge_1[i+2] + P_values_full_ge_1[i+1] for i in range(len(table_K_col))]
+    table_P_col = p_ge_1_full_for_table[2 : N + 2] 
+    table_D_col = [p_ge_1_full_for_table[i+2] - p_ge_1_full_for_table[i+1] for i in range(len(table_K_col))]
+    table_C_col = [p_ge_1_full_for_table[i+3] - 2*p_ge_1_full_for_table[i+2] + p_ge_1_full_for_table[i+1] for i in range(len(table_K_col))]
 
     df_table = pd.DataFrame({
         "K (Starters)": table_K_col,
@@ -294,11 +322,11 @@ st.write(f"Current Settings: **{DECK_SIZE}** Card Deck, **{HAND_SIZE}** Card Han
 st.caption(f"Part 2 & 3 Fixed Starter Count (K) = **{STARTER_COUNT_K}**")
 
 
-st.header("Part 1: P(At least 1 Starter)")
-st.write("This chart shows the probability of drawing at least one 'Starter' card (K), as K (the X-axis) increases.")
+st.header("Part 1: P(At least X Starter)")
+st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K), as K (the X-axis) increases.")
 df_plot_1, df_table_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE)
 st.line_chart(df_plot_1)
-st.header(f"📊 Probability Table (K=1 to {DECK_SIZE})")
+st.header(f"📊 Probability Table for P(X>=1) (K=1 to {DECK_SIZE})")
 df_display_1 = df_table_1.copy()
 prob_col_name_1 = f"P(X>=1) (N={DECK_SIZE}, n={HAND_SIZE})"
 df_display_1[prob_col_name_1] = df_display_1[prob_col_name_1].map('{:.4%}'.format)
