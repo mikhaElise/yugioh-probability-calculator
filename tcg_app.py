@@ -1,15 +1,3 @@
-好的，已经按你的要求修改完毕：
-
-1.  侧边栏 “Highlight NE Value / 高亮系统外数量” 后面的 `(用于 Part 3 & 4)` 已被删除。
-2.  Part 3 和 Part 4 图表下方显示高亮 `NE` 值对应概率的 `st.metric` 部分，格式已修改为百分比，并保留小数点后两位（例如 `12.34%`）。
-
------
-
-### 📄 `tcg_app.py` (已更新高亮格式和侧边栏标签)
-
-这是**完整**的 `tcg_app.py` 文件，只保留了代码。
-
-```python
 # -*- coding: utf-8 -*-
 import streamlit as st
 import streamlit.components.v1 as components
@@ -675,4 +663,3 @@ else:
     for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
-```
