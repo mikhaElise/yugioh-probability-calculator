@@ -13,6 +13,16 @@ st.set_page_config(
     page_icon="🎲",
     initial_sidebar_state="auto" # 让侧边栏状态更稳定
 )
+
+# 表格数据左对齐样式
+st.markdown("""
+<style>
+.dataframe td, .dataframe th {
+    text-align: left !important;
+    vertical-align: top !important;
+}
+</style>
+""", unsafe_allow_html=True)
 # --- 页面配置结束 ---
 
 @st.cache_data
@@ -487,7 +497,7 @@ else:
     st.altair_chart(lines_1.interactive(), use_container_width=True)
 
 # 边际效益分析 - 表格形式
-st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
+st.write("**边际效益分析 (Marginal Utility Analysis):**")
 st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)，即增加一个单位带来的概率提升最大的点。")
 if turning_points_1:
     # 准备表格数据
@@ -517,7 +527,7 @@ if K_HIGHLIGHT in df_plot_1.index:
                 col_idx_1 += 1
 else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}).")
-st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f"Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
 for (table_name, table_data) in all_tables_1:
     with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
@@ -551,7 +561,7 @@ else:
         lines_2 = base_chart_2.mark_line()
         st.altair_chart(lines_2.interactive(), use_container_width=True)
 
-        st.header(f"📊 Probability Table (A=0 to {max_A_part2}) / 概率表")
+        st.header(f"Probability Table (A=0 to {max_A_part2}) / 概率表")
         df_display_2 = df_table_2.copy()
         df_display_2["Probability / 概率"] = df_display_2["Probability / 概率"].map('{:.4%}'.format)
         df_display_2["P(A+1) - P(A) (Marginal / 边际)"] = df_display_2["P(A+1) - P(A) (Marginal / 边际)"].map('{:+.4%}'.format)
@@ -610,7 +620,7 @@ else:
         st.altair_chart(lines_3.interactive(), use_container_width=True)
 
     # 边际效益分析 - 表格形式
-    st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
+    st.write("**边际效益分析 (Marginal Utility Analysis):**")
     st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)。")
     if turning_points_3:
         # 准备表格数据
@@ -635,7 +645,7 @@ else:
             if not pd.isna(prob): 
                  with cols[idx]:
                     st.metric(label=col_name.split('(')[0].strip(), value=f"{prob:.2%}") 
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
+    st.header(f"Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     for (table_name, table_data) in all_tables_3:
         with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
@@ -686,7 +696,7 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
         st.altair_chart(lines_3c.interactive(), use_container_width=True)
 
     # 边际效益分析 - 表格形式
-    st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
+    st.write("**边际效益分析 (Marginal Utility Analysis):**")
     st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)。")
     if turning_points_3c:
         # 准备表格数据
@@ -711,7 +721,7 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
             if not pd.isna(prob):
                  with cols_cumul[idx]:
                     st.metric(label=col_name.split('(')[0].strip(), value=f"{prob:.2%}") 
-    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
+    st.header(f"Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     for (table_name, table_data) in all_tables_3_cumulative:
         with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
@@ -745,7 +755,7 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
             if not pd.isna(prob):
                 with cols_4[idx]:
                     st.metric(label=col_name.split('(')[0].strip(), value=f"{prob:.2%}") 
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
+    st.header(f"Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
     for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
