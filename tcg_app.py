@@ -440,7 +440,10 @@ def get_part4_data(D, K_fixed):
 
     return df_plot, all_tables
 
-st.set_page_config(layout="wide")
+# --- (修改) 设置页面配置，包括深色主题 ---
+st.set_page_config(layout="wide", page_title="YGO Prob Calc", page_icon="🎲") # Added title and icon
+# --- 主题设置结束 ---
+
 
 # ===== GoatCounter 代码 =====
 GOATCOUNTER_SCRIPT = """
@@ -479,19 +482,21 @@ if not st.session_state.ga_injected:
     st.session_state.ga_injected = True
 # ===== Google Analytics 结束 =====
 
-st.sidebar.markdown("Made by mikhaElise")
-
+# --- (修改) 头像和署名顺序 ---
 try:
     img = Image.open("avatar.png") 
     target_width = 150
     w_percent = (target_width / float(img.size[0]))
     target_height = int((float(img.size[1]) * float(w_percent)))
     img_resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-    st.sidebar.image(img_resized)
+    st.sidebar.image(img_resized) # 先显示图片
 except FileNotFoundError:
     st.sidebar.caption("avatar.png not found. (Place it in the same folder as the script)")
 except Exception as e:
     st.sidebar.error(f"Error loading image: {e}")
+
+st.sidebar.markdown("Made by mikhaElise") # 后显示署名
+# --- 修改结束 ---
 
 st.sidebar.markdown("Bilibili: https://b23.tv/9aM3G4T")
 st.sidebar.header("Parameters / 参数")
@@ -500,12 +505,12 @@ DECK_SIZE = st.sidebar.number_input(
     "1. Total Deck Size (D) / 卡组总数", 
     min_value=40, 
     max_value=60, 
-    value=40, # <-- Default changed
+    value=40, 
     step=1,
     help="设置卡组总数 (40-60)"
 )
 HAND_SIZE = st.sidebar.number_input(
-    "2. Opening Hand Size (n) / 起手数", # <-- Label changed
+    "2. Opening Hand Size (n) / 起手数", 
     min_value=0, 
     max_value=10, 
     value=5,
@@ -513,22 +518,34 @@ HAND_SIZE = st.sidebar.number_input(
     help="设置起手抽几张牌 (0-10)。注意: Part 3 & 4 计算固定为起手5张，抽第6张。"
 )
 STARTER_COUNT_K = st.sidebar.number_input(
-    "3. Fixed Starter Size (K) / 固定动点数", # <-- Label changed
+    "3. Starter Size (K) / 动点数", # <-- Label changed
     min_value=0,
     max_value=DECK_SIZE, 
-    value=min(17, DECK_SIZE), # <-- Default changed and capped
+    value=min(17, DECK_SIZE), 
     step=1,
-    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。"
+    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。" 
 )
+
+# --- (新) K 高亮输入框 ---
+K_HIGHLIGHT = st.sidebar.number_input(
+    "4. Highlight Starter Value (K) / 高亮动点数 (用于 Part 1)",
+    min_value=0,
+    max_value=DECK_SIZE, 
+    value=min(17, DECK_SIZE), 
+    step=1,
+    help=f"输入一个 K 值 (0 到 {DECK_SIZE})，将在 Part 1 图表下方显示该点的精确概率。"
+)
+# --- 新输入框结束 ---
+
 
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
 max_ne_possible = max(0, max_ne_possible) 
 
 NE_HIGHLIGHT = st.sidebar.number_input(
-    "4. Non-engine Size（NE）/系统外数量", # <-- Label changed
+    "5. Non-engine Size（NE）/系统外数量", # <-- Number adjusted
     min_value=0,
     max_value=max_ne_possible, 
-    value=min(20, max_ne_possible), # <-- Default changed and capped
+    value=min(20, max_ne_possible), 
     step=1,
     help=f"输入一个 NE 值 (0 到 {max_ne_possible})，将在 Part 3 和 4 图表下方显示该点的精确概率。" 
 )
@@ -543,6 +560,24 @@ st.header("Part 1: P(At least X Starter) / Part 1: 起手至少X张动点概率"
 st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中抽到特定数量动点的概率。")
 df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 st.line_chart(df_plot_1)
+
+# --- (新) Part 1 高亮显示 ---
+if K_HIGHLIGHT in df_plot_1.index:
+    highlight_data_1 = df_plot_1.loc[K_HIGHLIGHT]
+    st.write(f"**Probabilities for K = {K_HIGHLIGHT} / K = {K_HIGHLIGHT} 时的概率:**")
+    valid_cols_1 = [col for col in highlight_data_1.index if not pd.isna(highlight_data_1[col])]
+    cols_1 = st.columns(len(valid_cols_1))
+    col_idx_1 = 0
+    for col_name, prob in highlight_data_1.items():
+        if not pd.isna(prob): 
+            with cols_1[col_idx_1]:
+                curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
+                st.metric(label=curve_label, value=f"{prob:.2%}") 
+                col_idx_1 += 1
+else:
+    st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
+# --- Part 1 高亮结束 ---
+
 st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
 
@@ -584,7 +619,7 @@ st.caption("Note: Calculations are for opening 5, drawing 1 (total 6 cards). / �
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 elif max_ne_possible < 0:
-     st.warning(f"Warning: K ({STARTER_COUNT_K}) + NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 3 & 4 results invalid.")
+     st.warning(f"Warning: K ({STARTER_COUNT_K}) + Highlighted NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 3 & 4 results invalid.")
 else:
     max_NE = max_ne_possible
     df_plot_3, all_tables_3 = get_part3_data(DECK_SIZE, STARTER_COUNT_K)
@@ -601,7 +636,7 @@ else:
              if not pd.isna(prob): 
                  with cols[col_idx]:
                     curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
-                    st.metric(label=curve_label, value=f"{prob:.2%}") # <-- Format changed
+                    st.metric(label=curve_label, value=f"{prob:.2%}") 
                     col_idx += 1
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE})。")
@@ -621,7 +656,7 @@ st.caption("Note: Calculations assume opening 5, drawing 1 (total 6 cards). / �
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 elif max_ne_possible < 0:
-     st.warning(f"Warning: K ({STARTER_COUNT_K}) + NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 3 results invalid.")
+     st.warning(f"Warning: K ({STARTER_COUNT_K}) + Highlighted NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 3 results invalid.")
 else:
     max_NE_2 = max_ne_possible
     df_plot_3_cumulative, all_tables_3_cumulative = get_part3_cumulative_data(DECK_SIZE, STARTER_COUNT_K)
@@ -638,7 +673,7 @@ else:
              if not pd.isna(prob):
                  with cols_cumul[col_idx_cumul]:
                     curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
-                    st.metric(label=curve_label, value=f"{prob:.2%}") # <-- Format changed
+                    st.metric(label=curve_label, value=f"{prob:.2%}") 
                     col_idx_cumul += 1
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_2}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_2})。")
@@ -659,7 +694,7 @@ st.caption("Note: Calculations are for going second with drawing the 6th card. /
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 elif max_ne_possible < 0:
-     st.warning(f"Warning: K ({STARTER_COUNT_K}) + NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 4 results invalid.")
+     st.warning(f"Warning: K ({STARTER_COUNT_K}) + Highlighted NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 4 results invalid.")
 else:
     max_NE_4 = max_ne_possible
     df_plot_4, all_tables_4 = get_part4_data(DECK_SIZE, STARTER_COUNT_K)
@@ -676,7 +711,7 @@ else:
             if not pd.isna(prob):
                 with cols_4[col_idx_4]:
                     curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
-                    st.metric(label=curve_label, value=f"{prob:.2%}") # <-- Format changed
+                    st.metric(label=curve_label, value=f"{prob:.2%}") 
                     col_idx_4 += 1
     else:
          st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_4}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_4})。")
@@ -688,23 +723,20 @@ else:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
 
-# --- (新) 底部注释和图片 ---
 st.divider()
-st.caption("注：数据仅供参考。/ Note: Data is for reference only.")
+st.caption("Note: Data is for reference only. / 注：数据仅供参考。") # <-- Order reversed
 
 try:
-    img_meme = Image.open("meme.png") # 假设你的表情包文件名为 meme.png
-    target_width_meme = 300 # 设置表情包宽度
+    img_meme = Image.open("meme.png") 
+    target_width_meme = 400 
     
     w_percent_meme = (target_width_meme / float(img_meme.size[0]))
     target_height_meme = int((float(img_meme.size[1]) * float(w_percent_meme)))
     
     img_meme_resized = img_meme.resize((target_width_meme, target_height_meme), Image.Resampling.LANCZOS)
     
-    # 在页面主区域显示图片
     st.image(img_meme_resized) 
 except FileNotFoundError:
     st.caption("meme.png not found. (Place it in the same folder as the script)")
 except Exception as e:
     st.error(f"Error loading meme image: {e}")
-# --- 新增部分结束 ---
