@@ -522,7 +522,6 @@ STARTER_COUNT_K = st.sidebar.number_input(
 )
 
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
-# Clamp max_ne_possible to be at least 0
 max_ne_possible = max(0, max_ne_possible) 
 
 NE_HIGHLIGHT = st.sidebar.number_input(
@@ -531,7 +530,7 @@ NE_HIGHLIGHT = st.sidebar.number_input(
     max_value=max_ne_possible, 
     value=min(20, max_ne_possible), # <-- Default changed and capped
     step=1,
-    help=f"输入一个 NE 值 (0 到 {max_ne_possible})，将在 Part 3 和 4 图表下方显示该点的精确概率。" # Help text updated
+    help=f"输入一个 NE 值 (0 到 {max_ne_possible})，将在 Part 3 和 4 图表下方显示该点的精确概率。" 
 )
 
 
@@ -560,7 +559,6 @@ st.caption("Assumption: This calculation assumes 'Starters' (K) and 'Insecticide
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
 else:
-    # Ensure max_A calculation is valid before proceeding
     max_A_part2 = DECK_SIZE - STARTER_COUNT_K
     if max_A_part2 < 0:
          st.warning("Warning: K is larger than Deck Size for Part 2 calculations. Results may be zero.")
@@ -596,12 +594,11 @@ else:
     if NE_HIGHLIGHT in df_plot_3.index:
         highlight_data = df_plot_3.loc[NE_HIGHLIGHT]
         st.write(f"**Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的概率:**")
-        # Dynamically adjust columns based on available data
         valid_cols = [col for col in highlight_data.index if not pd.isna(highlight_data[col])]
         cols = st.columns(len(valid_cols))
         col_idx = 0
         for col_name, prob in highlight_data.items():
-             if not pd.isna(prob): # Check if probability is valid
+             if not pd.isna(prob): 
                  with cols[col_idx]:
                     curve_label = col_name.split('/')[0].strip() if '/' in col_name else col_name
                     st.metric(label=curve_label, value=f"{prob:.2%}") # <-- Format changed
@@ -690,3 +687,24 @@ else:
     for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
+
+# --- (新) 底部注释和图片 ---
+st.divider()
+st.caption("注：数据仅供参考。/ Note: Data is for reference only.")
+
+try:
+    img_meme = Image.open("meme.png") # 假设你的表情包文件名为 meme.png
+    target_width_meme = 300 # 设置表情包宽度
+    
+    w_percent_meme = (target_width_meme / float(img_meme.size[0]))
+    target_height_meme = int((float(img_meme.size[1]) * float(w_percent_meme)))
+    
+    img_meme_resized = img_meme.resize((target_width_meme, target_height_meme), Image.Resampling.LANCZOS)
+    
+    # 在页面主区域显示图片
+    st.image(img_meme_resized) 
+except FileNotFoundError:
+    st.caption("meme.png not found. (Place it in the same folder as the script)")
+except Exception as e:
+    st.error(f"Error loading meme image: {e}")
+# --- 新增部分结束 ---
