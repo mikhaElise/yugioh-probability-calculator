@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- # <-- 添加这行确保中文字符正确显示
+# -*- coding: utf-8 -*-
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -91,13 +91,13 @@ def get_starter_probability_data(N, n):
         p_eq_5_list.append(p_eq_5)
 
     df_plot = pd.DataFrame({
-        "K (Starters / 动点)": plot_k_col,
-        "P(X >= 1)": p_ge_1_list,
-        "P(X >= 2)": p_ge_2_list,
-        "P(X >= 3)": p_ge_3_list,
-        "P(X >= 4)": p_ge_4_list,
-        "P(X = 5)": p_eq_5_list
-    }).set_index("K (Starters / 动点)")
+        "K (Starters)": plot_k_col,
+        "P(X >= 1)": p_ge_1_list, # Restored pure English
+        "P(X >= 2)": p_ge_2_list, # Restored pure English
+        "P(X >= 3)": p_ge_3_list, # Restored pure English
+        "P(X >= 4)": p_ge_4_list, # Restored pure English
+        "P(X = 5)": p_eq_5_list  # Restored pure English
+    }).set_index("K (Starters)")
 
     table_K_col = list(range(1, N + 1))
     table_P_col = p_ge_1_full_for_table[2 : N + 2] 
@@ -105,7 +105,7 @@ def get_starter_probability_data(N, n):
     table_C_col = [p_ge_1_full_for_table[i+3] - 2*p_ge_1_full_for_table[i+2] + p_ge_1_full_for_table[i+1] for i in range(len(table_K_col))]
 
     df_table = pd.DataFrame({
-        "K (Starters / 动点)": table_K_col,
+        "K (Starters / 动点)": table_K_col, # Keep table column translation
         f"P(X>=1) (N={N}, n={n}) / 至少1张概率": table_P_col,
         "P(K) - P(K-1) (Marginal / 边际)": table_D_col,
         "P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)": table_C_col
@@ -134,9 +134,9 @@ def get_combo_probability_data(D, n, K_fixed):
     plot_A_col = list(range(max_A + 1))
     plot_P_col = P_values_full[1 : max_A + 2]
     df_plot = pd.DataFrame({
-        "A (Insecticides / 杀虫剂)": plot_A_col,
-        "Probability / 概率": plot_P_col
-    }).set_index("A (Insecticides / 杀虫剂)")
+        "A (Insecticides)": plot_A_col, # Restored pure English
+        "Probability": plot_P_col     # Restored pure English
+    }).set_index("A (Insecticides)")
 
     table_A_col = list(range(max_A + 1))
     table_P_col = P_values_full[1 : max_A + 2]
@@ -144,7 +144,7 @@ def get_combo_probability_data(D, n, K_fixed):
     table_C_col = [P_values_full[i+2] - 2*P_values_full[i+1] + P_values_full[i] for i in range(len(table_A_col))]
     
     df_table = pd.DataFrame({
-        "A (Insecticides / 杀虫剂)": table_A_col,
+        "A (Insecticides / 杀虫剂)": table_A_col, # Keep table column translation
         "Probability / 概率": table_P_col,
         "P(A+1) - P(A) (Marginal / 边际)": table_D_col,
         "P(A+1)-2P(A)+P(A-1) (Curvature / 曲率)": table_C_col
@@ -244,16 +244,16 @@ def get_part3_data(D, K_fixed):
         P_full[7].append(calculate_part3_prob_single(ne_val, D, K_fixed, 7))
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine / 系统外)": plot_NE_col})
-    df_plot[f"C0 (i=0 NE / 0张系统外)"] = P_full[0][1 : max_NE + 2]
-    df_plot[f"C1 (i=1 NE / 1张系统外)"] = P_full[1][1 : max_NE + 2]
-    df_plot[f"C2 (i=2 NE / 2张系统外)"] = P_full[2][1 : max_NE + 2]
-    df_plot[f"C3 (i=3 NE / 3张系统外)"] = P_full[3][1 : max_NE + 2]
-    df_plot[f"C4 (i=4 NE / 4张系统外)"] = P_full[4][1 : max_NE + 2]
-    df_plot[f"C6 (i=5 NE, >=1 K / 5张系统外, >=1动点)"] = P_full[5][1 : max_NE + 2]
-    df_plot[f"C7 (i=5 NE, 0 K / 5张系统外, 0动点)"] = P_full[7][1 : max_NE + 2]
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) # Restored pure English Index
+    df_plot[f"C0 (i=0 NE)"] = P_full[0][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C1 (i=1 NE)"] = P_full[1][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C2 (i=2 NE)"] = P_full[2][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C3 (i=3 NE)"] = P_full[3][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C4 (i=4 NE)"] = P_full[4][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C6 (i=5 NE, >=1 K)"] = P_full[5][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C7 (i=5 NE, 0 K)"] = P_full[7][1 : max_NE + 2] # Restored pure English Columns
     
-    df_plot = df_plot.set_index("NE (Non-Engine / 系统外)")
+    df_plot = df_plot.set_index("NE (Non-Engine)")
 
     all_tables = []
     curve_names = [
@@ -276,7 +276,7 @@ def get_part3_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine / 系统外)": table_NE_col,
+            "NE (Non-Engine / 系统外)": table_NE_col, # Keep table column translation
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
@@ -316,13 +316,13 @@ def get_part3_cumulative_data(D, K_fixed):
         P_cumulative_full[4][ne_idx] = p5                     
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine / 系统外)": plot_NE_col})
-    df_plot[f"C_ge1 (>=1 NE / >=1张系统外)"] = P_cumulative_full[0][1 : max_NE + 2]
-    df_plot[f"C_ge2 (>=2 NE / >=2张系统外)"] = P_cumulative_full[1][1 : max_NE + 2]
-    df_plot[f"C_ge3 (>=3 NE / >=3张系统外)"] = P_cumulative_full[2][1 : max_NE + 2]
-    df_plot[f"C_ge4 (>=4 NE / >=4张系统外)"] = P_cumulative_full[3][1 : max_NE + 2]
-    df_plot[f"C_ge5 (>=5 NE / >=5张系统外)"] = P_cumulative_full[4][1 : max_NE + 2]
-    df_plot = df_plot.set_index("NE (Non-Engine / 系统外)")
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) # Restored pure English Index
+    df_plot[f"C_ge1 (>=1 NE)"] = P_cumulative_full[0][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C_ge2 (>=2 NE)"] = P_cumulative_full[1][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C_ge3 (>=3 NE)"] = P_cumulative_full[2][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C_ge4 (>=4 NE)"] = P_cumulative_full[3][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C_ge5 (>=5 NE)"] = P_cumulative_full[4][1 : max_NE + 2] # Restored pure English Columns
+    df_plot = df_plot.set_index("NE (Non-Engine)")
 
     all_tables = []
     curve_names = [
@@ -342,7 +342,7 @@ def get_part3_cumulative_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine / 系统外)": table_NE_col,
+            "NE (Non-Engine / 系统外)": table_NE_col, # Keep table column translation
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
@@ -391,15 +391,15 @@ def get_part4_data(D, K_fixed):
             P_full[i].append(calculate_part4_prob_single(ne_val, D, K_fixed, i))
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine / 系统外)": plot_NE_col})
-    df_plot[f"C1 (1NE, 5K / 1系统外, 5动点)"] = P_full[1][1 : max_NE + 2]
-    df_plot[f"C2 (2NE, 4K / 2系统外, 4动点)"] = P_full[2][1 : max_NE + 2]
-    df_plot[f"C3 (3NE, 3K / 3系统外, 3动点)"] = P_full[3][1 : max_NE + 2]
-    df_plot[f"C4 (4NE, 2K / 4系统外, 2动点)"] = P_full[4][1 : max_NE + 2]
-    df_plot[f"C5 (5NE, 1K / 5系统外, 1动点)"] = P_full[5][1 : max_NE + 2]
-    df_plot[f"C6 (6NE, 0K / 6系统外, 0动点)"] = P_full[6][1 : max_NE + 2]
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) # Restored pure English Index
+    df_plot[f"C1 (1NE, 5K)"] = P_full[1][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C2 (2NE, 4K)"] = P_full[2][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C3 (3NE, 3K)"] = P_full[3][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C4 (4NE, 2K)"] = P_full[4][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C5 (5NE, 1K)"] = P_full[5][1 : max_NE + 2] # Restored pure English Columns
+    df_plot[f"C6 (6NE, 0K)"] = P_full[6][1 : max_NE + 2] # Restored pure English Columns
     
-    df_plot = df_plot.set_index("NE (Non-Engine / 系统外)")
+    df_plot = df_plot.set_index("NE (Non-Engine)")
 
     all_tables = []
     curve_names = [
@@ -422,7 +422,7 @@ def get_part4_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine / 系统外)": table_NE_col,
+            "NE (Non-Engine / 系统外)": table_NE_col, # Keep table column translation
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
@@ -601,8 +601,8 @@ else:
 st.divider()
 st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards) / Part 4: P(抽6张含i张系统外 且 6-i张动点)")
 st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表分析后攻抽完6张牌后的精确手牌构成。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
-st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} 动点 + X轴 (系统外) + 剩余卡 (废件)")
-st.caption("Note: Calculations are for drawing exactly 6 cards. / 注意：计算基于精确抽6张牌。")
+st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} (动点) + X轴 (系统外) + 剩余卡 (废件)")
+st.caption("Note: Calculations are for going second with drawing the 6th card. / 注意：计算基于后攻抽第6张牌。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
