@@ -65,6 +65,62 @@ def calculate_exact_prob(i, K, N, n):
     
     return ways_to_draw_exact / total_combinations
 
+# --- Part 1 边际效益分析 ---
+st.subheader("📈 边际效益分析 / Marginal Benefit Analysis")
+
+# 分析所有曲线的边际效益
+marginal_results = analyze_all_curves_marginal(df_plot_1, [
+    "P(X >= 1)", "P(X >= 2)", "P(X >= 3)", "P(X >= 4)", "P(X = 5)"
+])
+
+if marginal_results:
+    # 创建分析结果的DataFrame
+    analysis_data = []
+    for curve_name, analysis in marginal_results.items():
+        turning_point = analysis['main_turning_point']
+        optimal_range = analysis['optimal_range']
+        
+        if turning_point:
+            analysis_data.append({
+                '曲线 / Curve': curve_name,
+                '转折点K值 / Turning Point K': turning_point['x_value'],
+                '转折点概率 / Probability at Turning Point': f"{turning_point['probability']:.2%}",
+                '边际效益变化 / Marginal Change': f"{turning_point['marginal_change']:+.4f}",
+                '最优区间 / Optimal Range': optimal_range['description'] if optimal_range else "N/A",
+                '最大边际效益 / Max Marginal Gain': f"{analysis['max_marginal_gain']:.4f}"
+            })
+    
+    if analysis_data:
+        df_analysis = pd.DataFrame(analysis_data)
+        st.dataframe(df_analysis, use_container_width=True)
+        
+        # 显示详细分析
+        st.write("### 🔍 详细转折点分析")
+        for curve_name, analysis in marginal_results.items():
+            if analysis['main_turning_point']:
+                with st.expander(f"**{curve_name}** 的边际效益分析"):
+                    tp = analysis['main_turning_point']
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("转折点K值", tp['x_value'])
+                    with col2:
+                        st.metric("该点概率", f"{tp['probability']:.2%}")
+                    with col3:
+                        st.metric("边际变化", f"{tp['marginal_change']:+.4f}")
+                    
+                    # 显示边际效益图表
+                    if len(analysis['marginal_gains']) > 1:
+                        marginal_df = pd.DataFrame({
+                            'K值': df_plot_1.index[1:len(analysis['marginal_gains'])+1],
+                            '边际效益': analysis['marginal_gains']
+                        }).set_index('K值')
+                        
+                        st.line_chart(marginal_df, use_container_width=True)
+                        st.caption(f"{curve_name} 的边际效益变化曲线")
+else:
+    st.info("数据不足进行边际效益分析")
+
 @st.cache_data
 def get_starter_probability_data(N, n):
     
