@@ -5,13 +5,12 @@ import pandas as pd
 import math
 from PIL import Image
 
-# --- 页面配置 (包含主题设置) ---
+# --- 页面配置 (移除 theme 参数) ---
 st.set_page_config(
     layout="wide",
     page_title="YGO Prob Calc",
     page_icon="🎲",
-    initial_sidebar_state="auto", # 让侧边栏状态更稳定
-    theme="dark"
+    initial_sidebar_state="auto" 
 )
 # --- 页面配置结束 ---
 
