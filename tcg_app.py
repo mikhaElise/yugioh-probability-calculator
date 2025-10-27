@@ -58,60 +58,74 @@ def get_starter_probability_data(N, n):
     
     plot_k_col = list(range(N + 1))
     
-    p_ge_1_list = []
-    p_ge_2_list = []
-    p_ge_3_list = []
-    p_ge_4_list = []
-    p_eq_5_list = []
+    # --- Prepare data for all 5 curves + extended range for curvature ---
+    P_exact_full = [[calculate_exact_prob(i, k, N, n) for k in range(-1, N + 2)] for i in range(n + 1)] # i=0 to n, k=-1 to N+1
     
-    p_ge_1_full_for_table = [calculate_single_prob(k, N, n) for k in range(-1, N + 2)] 
+    P_cumulative_full = [[0.0] * (N + 3) for _ in range(n + 1)] # >=0 to >=n
 
-    for k_val in plot_k_col:
-        p_eq_0 = calculate_exact_prob(0, k_val, N, n)
-        p_eq_1 = calculate_exact_prob(1, k_val, N, n)
-        p_eq_2 = calculate_exact_prob(2, k_val, N, n)
-        p_eq_3 = calculate_exact_prob(3, k_val, N, n)
-        p_eq_4 = calculate_exact_prob(4, k_val, N, n)
-        p_eq_5 = calculate_exact_prob(5, k_val, N, n) 
+    for k_idx in range(N + 3): # from K=-1 to N+1
+        p_sum = 0.0
+        # Calculate P(X >= i) by summing P(X = j) for j >= i
+        # More efficient: Calculate P(X < i) and subtract from 1, but this works too
+        for i in range(n, -1, -1): # i = n down to 0
+             p_sum += P_exact_full[i][k_idx]
+             P_cumulative_full[i][k_idx] = p_sum # P_cumulative_full[i] stores P(X>=i)
 
-        p_lt_1 = p_eq_0
-        p_lt_2 = p_eq_0 + p_eq_1
-        p_lt_3 = p_eq_0 + p_eq_1 + p_eq_2
-        p_lt_4 = p_eq_0 + p_eq_1 + p_eq_2 + p_eq_3
-        
-        p_ge_1 = 1.0 - p_lt_1
-        p_ge_2 = 1.0 - p_lt_2
-        p_ge_3 = 1.0 - p_lt_3
-        p_ge_4 = 1.0 - p_lt_4
-        
-        p_ge_1_list.append(p_ge_1)
-        p_ge_2_list.append(p_ge_2)
-        p_ge_3_list.append(p_ge_3)
-        p_ge_4_list.append(p_ge_4)
-        p_eq_5_list.append(p_eq_5)
 
-    df_plot = pd.DataFrame({
-        "K (Starters)": plot_k_col,
-        "P(X >= 1)": p_ge_1_list, # Restored pure English
-        "P(X >= 2)": p_ge_2_list, # Restored pure English
-        "P(X >= 3)": p_ge_3_list, # Restored pure English
-        "P(X >= 4)": p_ge_4_list, # Restored pure English
-        "P(X = 5)": p_eq_5_list  # Restored pure English
-    }).set_index("K (Starters)")
+    # --- 1. Prepare Plot Data ---
+    df_plot = pd.DataFrame({"K (Starters)": plot_k_col})
+    df_plot["P(X >= 1)"] = P_cumulative_full[1][1 : N + 2] # K=0 to N
+    df_plot["P(X >= 2)"] = P_cumulative_full[2][1 : N + 2]
+    df_plot["P(X >= 3)"] = P_cumulative_full[3][1 : N + 2]
+    df_plot["P(X >= 4)"] = P_cumulative_full[4][1 : N + 2]
+    # For n=5, P(X>=5) is the same as P(X=5)
+    df_plot["P(X = 5)"] = P_exact_full[5][1 : N + 2] # Use P(X=5) directly
+    df_plot = df_plot.set_index("K (Starters)")
 
-    table_K_col = list(range(1, N + 1))
-    table_P_col = p_ge_1_full_for_table[2 : N + 2] 
-    table_D_col = [p_ge_1_full_for_table[i+2] - p_ge_1_full_for_table[i+1] for i in range(len(table_K_col))]
-    table_C_col = [p_ge_1_full_for_table[i+3] - 2*p_ge_1_full_for_table[i+2] + p_ge_1_full_for_table[i+1] for i in range(len(table_K_col))]
-
-    df_table = pd.DataFrame({
-        "K (Starters / 动点)": table_K_col, # Keep table column translation
-        f"P(X>=1) (N={N}, n={n}) / 至少1张概率": table_P_col,
-        "P(K) - P(K-1) (Marginal / 边际)": table_D_col,
-        "P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)": table_C_col
-    }).set_index("K (Starters / 动点)") 
+    # --- 2. Prepare 5 Tables Data ---
+    all_tables = []
+    curve_names = [
+        "P(X >= 1) / 至少1张动点",
+        "P(X >= 2) / 至少2张动点",
+        "P(X >= 3) / 至少3张动点",
+        "P(X >= 4) / 至少4张动点",
+        "P(X = 5) / 正好5张动点" # P(X>=5) == P(X=5)
+    ]
     
-    return df_plot, df_table
+    # Use P_cumulative_full for >=1 to >=4, P_exact_full for =5
+    data_sources = [
+        P_cumulative_full[1],
+        P_cumulative_full[2],
+        P_cumulative_full[3],
+        P_cumulative_full[4],
+        P_exact_full[5] # Use exact prob for the last curve/table
+    ]
+
+    for i_curve in range(5): # 0 to 4
+        
+        table_K_col = list(range(1, N + 1)) # K=1 to N for tables
+        P_curve = data_sources[i_curve] # Contains P(-1), P(0)... P(N+1)
+        
+        table_P_col = P_curve[2 : N + 2] # P(1) to P(N)
+        table_D_col = [P_curve[k+2] - P_curve[k+1] for k in range(len(table_K_col))] # P(K) - P(K-1)
+        table_C_col = [P_curve[k+3] - 2*P_curve[k+2] + P_curve[k+1] for k in range(len(table_K_col))] # P(K+1)-2P(K)+P(K-1)
+        
+        df_table = pd.DataFrame({
+            "K (Starters / 动点)": table_K_col,
+            "Probability / 概率": table_P_col,
+            "Marginal / 边际": table_D_col,
+            "Curvature / 曲率": table_C_col
+        })
+        df_table = df_table.set_index("K (Starters / 动点)")
+        
+        df_display = df_table.copy()
+        df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
+        df_display["Marginal / 边际"] = df_display["Marginal / 边际"].map('{:+.4%}'.format)
+        df_display["Curvature / 曲率"] = df_display["Curvature / 曲率"].map('{:+.4%}'.format)
+        
+        all_tables.append((curve_names[i_curve], df_display))
+
+    return df_plot, all_tables # Return plot df and list of table dfs
 
 def calculate_combo_prob_single(A, D, n, K_fixed, total_comb, comb_not_K):
     if A < 0:
@@ -134,8 +148,8 @@ def get_combo_probability_data(D, n, K_fixed):
     plot_A_col = list(range(max_A + 1))
     plot_P_col = P_values_full[1 : max_A + 2]
     df_plot = pd.DataFrame({
-        "A (Insecticides)": plot_A_col, # Restored pure English
-        "Probability": plot_P_col     # Restored pure English
+        "A (Insecticides)": plot_A_col, 
+        "Probability": plot_P_col     
     }).set_index("A (Insecticides)")
 
     table_A_col = list(range(max_A + 1))
@@ -144,7 +158,7 @@ def get_combo_probability_data(D, n, K_fixed):
     table_C_col = [P_values_full[i+2] - 2*P_values_full[i+1] + P_values_full[i] for i in range(len(table_A_col))]
     
     df_table = pd.DataFrame({
-        "A (Insecticides / 杀虫剂)": table_A_col, # Keep table column translation
+        "A (Insecticides / 杀虫剂)": table_A_col, 
         "Probability / 概率": table_P_col,
         "P(A+1) - P(A) (Marginal / 边际)": table_D_col,
         "P(A+1)-2P(A)+P(A-1) (Curvature / 曲率)": table_C_col
@@ -244,14 +258,14 @@ def get_part3_data(D, K_fixed):
         P_full[7].append(calculate_part3_prob_single(ne_val, D, K_fixed, 7))
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) # Restored pure English Index
-    df_plot[f"C0 (i=0 NE)"] = P_full[0][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C1 (i=1 NE)"] = P_full[1][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C2 (i=2 NE)"] = P_full[2][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C3 (i=3 NE)"] = P_full[3][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C4 (i=4 NE)"] = P_full[4][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C6 (i=5 NE, >=1 K)"] = P_full[5][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C7 (i=5 NE, 0 K)"] = P_full[7][1 : max_NE + 2] # Restored pure English Columns
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
+    df_plot[f"C0 (i=0 NE)"] = P_full[0][1 : max_NE + 2] 
+    df_plot[f"C1 (i=1 NE)"] = P_full[1][1 : max_NE + 2] 
+    df_plot[f"C2 (i=2 NE)"] = P_full[2][1 : max_NE + 2] 
+    df_plot[f"C3 (i=3 NE)"] = P_full[3][1 : max_NE + 2] 
+    df_plot[f"C4 (i=4 NE)"] = P_full[4][1 : max_NE + 2] 
+    df_plot[f"C6 (i=5 NE, >=1 K)"] = P_full[5][1 : max_NE + 2] 
+    df_plot[f"C7 (i=5 NE, 0 K)"] = P_full[7][1 : max_NE + 2] 
     
     df_plot = df_plot.set_index("NE (Non-Engine)")
 
@@ -276,7 +290,7 @@ def get_part3_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine / 系统外)": table_NE_col, # Keep table column translation
+            "NE (Non-Engine / 系统外)": table_NE_col, 
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
@@ -316,12 +330,12 @@ def get_part3_cumulative_data(D, K_fixed):
         P_cumulative_full[4][ne_idx] = p5                     
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) # Restored pure English Index
-    df_plot[f"C_ge1 (>=1 NE)"] = P_cumulative_full[0][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C_ge2 (>=2 NE)"] = P_cumulative_full[1][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C_ge3 (>=3 NE)"] = P_cumulative_full[2][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C_ge4 (>=4 NE)"] = P_cumulative_full[3][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C_ge5 (>=5 NE)"] = P_cumulative_full[4][1 : max_NE + 2] # Restored pure English Columns
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
+    df_plot[f"C_ge1 (>=1 NE)"] = P_cumulative_full[0][1 : max_NE + 2] 
+    df_plot[f"C_ge2 (>=2 NE)"] = P_cumulative_full[1][1 : max_NE + 2] 
+    df_plot[f"C_ge3 (>=3 NE)"] = P_cumulative_full[2][1 : max_NE + 2] 
+    df_plot[f"C_ge4 (>=4 NE)"] = P_cumulative_full[3][1 : max_NE + 2] 
+    df_plot[f"C_ge5 (>=5 NE)"] = P_cumulative_full[4][1 : max_NE + 2] 
     df_plot = df_plot.set_index("NE (Non-Engine)")
 
     all_tables = []
@@ -342,7 +356,7 @@ def get_part3_cumulative_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine / 系统外)": table_NE_col, # Keep table column translation
+            "NE (Non-Engine / 系统外)": table_NE_col, 
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
@@ -391,13 +405,13 @@ def get_part4_data(D, K_fixed):
             P_full[i].append(calculate_part4_prob_single(ne_val, D, K_fixed, i))
 
     plot_NE_col = list(range(max_NE + 1))
-    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) # Restored pure English Index
-    df_plot[f"C1 (1NE, 5K)"] = P_full[1][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C2 (2NE, 4K)"] = P_full[2][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C3 (3NE, 3K)"] = P_full[3][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C4 (4NE, 2K)"] = P_full[4][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C5 (5NE, 1K)"] = P_full[5][1 : max_NE + 2] # Restored pure English Columns
-    df_plot[f"C6 (6NE, 0K)"] = P_full[6][1 : max_NE + 2] # Restored pure English Columns
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
+    df_plot[f"C1 (1NE, 5K)"] = P_full[1][1 : max_NE + 2] 
+    df_plot[f"C2 (2NE, 4K)"] = P_full[2][1 : max_NE + 2] 
+    df_plot[f"C3 (3NE, 3K)"] = P_full[3][1 : max_NE + 2] 
+    df_plot[f"C4 (4NE, 2K)"] = P_full[4][1 : max_NE + 2] 
+    df_plot[f"C5 (5NE, 1K)"] = P_full[5][1 : max_NE + 2] 
+    df_plot[f"C6 (6NE, 0K)"] = P_full[6][1 : max_NE + 2] 
     
     df_plot = df_plot.set_index("NE (Non-Engine)")
 
@@ -422,7 +436,7 @@ def get_part4_data(D, K_fixed):
         table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
         
         df_table = pd.DataFrame({
-            "NE (Non-Engine / 系统外)": table_NE_col, # Keep table column translation
+            "NE (Non-Engine / 系统外)": table_NE_col, 
             "Probability / 概率": table_P_col,
             "Marginal / 边际": table_D_col,
             "Curvature / 曲率": table_C_col
@@ -526,21 +540,22 @@ st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) / Part 2, 3 & 4 固定动点�
 
 st.header("Part 1: P(At least X Starter) / Part 1: 起手至少X张动点概率")
 st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中抽到特定数量动点的概率。")
-df_plot_1, df_table_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE)
+df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) # <-- 修改了返回值
 st.line_chart(df_plot_1)
-st.header(f"📊 Probability Table for P(X>=1) (K=1 to {DECK_SIZE}) / P(X>=1) 概率表")
-st.write("Table shows Marginal (P(K) - P(K-1)) and Curvature (P(K+1) - 2P(K) + P(K-1)) for the P(X>=1) curve. / 表格显示 P(X>=1) 曲线的边际和曲率。")
-df_display_1 = df_table_1.copy()
-prob_col_name_1 = f"P(X>=1) (N={DECK_SIZE}, n={HAND_SIZE}) / 至少1张概率"
-df_display_1[prob_col_name_1] = df_display_1[prob_col_name_1].map('{:.4%}'.format)
-df_display_1["P(K) - P(K-1) (Marginal / 边际)"] = df_display_1["P(K) - P(K-1) (Marginal / 边际)"].map('{:+.4%}'.format)
-df_display_1["P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)"] = df_display_1["P(K+1)-2P(K)+P(K-1) (Curvature / 曲率)"].map('{:+.4%}'.format)
-st.dataframe(df_display_1, use_container_width=True, height=300) 
+st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") # <-- 修改了标题
+st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") # <-- 修改了描述
+
+# --- (新) Part 1 循环显示 5 个表格 ---
+for (table_name, table_data) in all_tables_1:
+    with st.expander(f"**{table_name}**"):
+        st.dataframe(table_data, use_container_width=True)
+# --- Part 1 表格修改结束 ---
 
 
 st.divider()
 st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / Part 2: P(至少1动点 且 至少1杀虫剂)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards). / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**，显示随着卡组中“杀虫剂”(A) 数量 (X轴) 的增加，起手手牌 (n张) 中同时抽到至少1动点和至少1杀虫剂的概率变化。")
+st.caption("⚠️ Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards. / ⚠️ 假设：此计算假设动点 (K) 和杀虫剂 (A) 是完全不重叠的两组卡。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}). / 错误：固定动点数必须小于卡组总数。")
