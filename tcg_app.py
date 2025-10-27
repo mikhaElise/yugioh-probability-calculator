@@ -18,6 +18,102 @@ st.set_page_config(
 # --- 页面配置结束 ---
 
 @st.cache_data
+@st.cache_data
+def marginal_benefit_analysis(probabilities, x_values, curve_name):
+    """
+    边际效益分析：找到收益递减的转折点
+    """
+    if len(probabilities) < 3:
+        return None
+    
+    # 计算边际效益（一阶导数）
+    marginal_gains = []
+    for i in range(1, len(probabilities)):
+        if i < len(x_values):
+            marginal_gain = probabilities[i] - probabilities[i-1]
+            marginal_gains.append(marginal_gain)
+    
+    if len(marginal_gains) < 2:
+        return None
+    
+    # 计算边际效益的变化率（二阶导数，即曲率）
+    marginal_changes = []
+    for i in range(1, len(marginal_gains)):
+        marginal_change = marginal_gains[i] - marginal_gains[i-1]
+        marginal_changes.append(marginal_change)
+    
+    # 找到转折点（边际效益开始下降的点）
+    turning_points = []
+    for i in range(1, len(marginal_gains)):
+        if i < len(marginal_changes) and marginal_changes[i-1] < 0:
+            # 边际效益开始下降的点
+            turning_points.append({
+                'x_value': x_values[i+1] if i+1 < len(x_values) else x_values[-1],
+                'probability': probabilities[i+1] if i+1 < len(probabilities) else probabilities[-1],
+                'marginal_gain': marginal_gains[i],
+                'marginal_change': marginal_changes[i-1],
+                'position': i+1
+            })
+    
+    # 找到最重要的转折点（边际效益下降最明显的点）
+    if turning_points:
+        main_turning_point = min(turning_points, key=lambda x: x['marginal_change'])
+    else:
+        main_turning_point = None
+    
+    return {
+        'curve_name': curve_name,
+        'marginal_gains': marginal_gains,
+        'marginal_changes': marginal_changes,
+        'turning_points': turning_points,
+        'main_turning_point': main_turning_point,
+        'max_marginal_gain': max(marginal_gains) if marginal_gains else 0,
+        'optimal_range': find_optimal_range(marginal_gains, x_values[1:len(marginal_gains)+1])
+    }
+
+@st.cache_data
+def find_optimal_range(marginal_gains, x_values, threshold_ratio=0.3):
+    """
+    找到最优区间：边际效益高于最大值的threshold_ratio的区域
+    """
+    if not marginal_gains:
+        return None
+    
+    max_gain = max(marginal_gains)
+    threshold = max_gain * threshold_ratio
+    
+    optimal_indices = [i for i, gain in enumerate(marginal_gains) if gain >= threshold]
+    
+    if not optimal_indices:
+        return None
+    
+    start_idx = min(optimal_indices)
+    end_idx = max(optimal_indices)
+    
+    return {
+        'start_x': x_values[start_idx],
+        'end_x': x_values[end_idx],
+        'start_probability_idx': start_idx,
+        'end_probability_idx': end_idx,
+        'description': f"最优区间: {x_values[start_idx]} - {x_values[end_idx]}"
+    }
+
+@st.cache_data
+def analyze_all_curves_marginal(df_plot, curve_names):
+    """
+    分析所有曲线的边际效益
+    """
+    results = {}
+    x_values = df_plot.index.tolist()
+    
+    for col in df_plot.columns:
+        probabilities = df_plot[col].tolist()
+        analysis = marginal_benefit_analysis(probabilities, x_values, col)
+        if analysis:
+            results[col] = analysis
+    
+    return results
+
 def safe_comb(n, k):
     if k < 0 or n < k or n < 0:
         return 0
