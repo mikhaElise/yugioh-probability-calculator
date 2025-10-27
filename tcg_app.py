@@ -573,7 +573,8 @@ NE_HIGHLIGHT = st.sidebar.number_input(
 )
 
 
-st.title("YGO Opening Hand Probability Calculator / YGO起手概率计算器")
+st.title("YGO Opening Hand Probability Calculator / ")
+st.title("YGO起手概率计算器")
 st.write(f"Current Settings / 当前设置: **{DECK_SIZE}** Card Deck / 卡组总数, **{HAND_SIZE}** Card Hand / 起手卡数")
 st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) / Part 2, 3 & 4 固定动点数 = **{STARTER_COUNT_K}**")
 
