@@ -441,6 +441,18 @@ def get_part4_data(D, K_fixed):
 
 st.set_page_config(layout="wide")
 
+GOATCOUNTER_SCRIPT = """
+<script data-goatcounter="https://mikhaelise.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+"""
+# 使用 session state 防止重复注入
+if 'gc_injected' not in st.session_state:
+    st.session_state.gc_injected = False
+
+if not st.session_state.gc_injected:
+    components.html(GOATCOUNTER_SCRIPT, height=0)
+    st.session_state.gc_injected = True
+
 GA_ID = "G-NKZ1V5K6B3"
 
 # --- (修正) 确保 components 已经被导入 ---
