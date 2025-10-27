@@ -9,7 +9,7 @@ from PIL import Image
 st.set_page_config(
     layout="wide",
     page_title="YGO Prob Calc",
-    page_icon="🎲🎲",
+    page_icon="🎲",
     initial_sidebar_state="auto" # 让侧边栏状态更稳定
     # 默认情况下，Streamlit Cloud 会尝试匹配用户系统的主题（深色/浅色）
     # 深色主题，取消下面一行的注释，但也行不通:
@@ -600,7 +600,7 @@ else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 # --- Part 1 高亮结束 ---
 
-st.header(f"📊📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -627,7 +627,7 @@ else:
         
         df_plot_2, df_table_2 = get_combo_probability_data(DECK_SIZE, HAND_SIZE, STARTER_COUNT_K)
         st.line_chart(df_plot_2)
-        st.header(f"📊📊 Probability Table (A=0 to {max_A_part2}) / 概率表")
+        st.header(f"📊 Probability Table (A=0 to {max_A_part2}) / 概率表")
         st.write("Table shows Probability, Marginal (P(A+1) - P(A)), and Curvature (P(A+1) - 2P(A) + P(A-1)). / 表格显示概率，边际和曲率。")
         df_display_2 = df_table_2.copy()
         df_display_2["Probability / 概率"] = df_display_2["Probability / 概率"].map('{:.4%}'.format)
@@ -675,7 +675,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE})。")
 
-    st.header(f"📊📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3:
@@ -717,7 +717,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_2}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_2})。")
     
-    st.header(f"📊📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
+    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示累积概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3_cumulative:
@@ -760,7 +760,7 @@ else:
     else:
          st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_4}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_4})。")
     
-    st.header(f"📊📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_4:
