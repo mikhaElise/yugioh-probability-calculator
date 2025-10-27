@@ -453,7 +453,7 @@ GA_SCRIPT = f"""
       gtag('config', '{GA_ID}');
     </script>
 """
-components.html(GA_SCRIPT, height=0)
+components.html(GA_SCRIPT)
 st.sidebar.markdown("Made by mikhaElise")
 
 try:
