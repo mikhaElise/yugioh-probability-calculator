@@ -441,18 +441,29 @@ def get_part4_data(D, K_fixed):
     return df_plot, all_tables
 
 st.set_page_config(layout="wide")
-GA_ID = "G-NKZ1V5K6B3" 
 
-GA_SCRIPT = f"""
+# ===== 插入改进后的GA代码在这里 =====
+GA_ID = "G-NKZ1V5K6B3"
+
+if not st.session_state.get('ga_injected', False):
+    GA_SCRIPT = f"""
+    <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){{dataLayer.push(arguments);}}
       gtag('js', new Date());
-
-      gtag('config', '{GA_ID}');
+      gtag('config', '{GA_ID}', {{
+        'page_title': 'TCG Probability Calculator',
+        'page_location': window.location.href
+      }});
     </script>
-"""
+    """
+    components.html(GA_SCRIPT, height=0)
+    st.session_state.ga_injected = True
+# ===== GA代码结束 =====
+
+# 然后继续原有的侧边栏和主内容代码
 components.html(GA_SCRIPT)
 st.sidebar.markdown("Made by mikhaElise")
 
