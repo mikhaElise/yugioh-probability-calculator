@@ -13,16 +13,6 @@ st.set_page_config(
     page_icon="🎲",
     initial_sidebar_state="auto" # 让侧边栏状态更稳定
 )
-
-# 表格数据左对齐样式
-st.markdown("""
-<style>
-.dataframe td, .dataframe th {
-    text-align: left !important;
-    vertical-align: top !important;
-}
-</style>
-""", unsafe_allow_html=True)
 # --- 页面配置结束 ---
 
 @st.cache_data
@@ -57,7 +47,9 @@ def calculate_single_prob(K, N, n):
 def calculate_exact_prob(i, K, N, n):
     if n == 0:
         return 0.0
-    if K < i:
+    if K < i:  # 当动点数量小于目标数量时，概率为0
+        return 0.0
+    if i > n:  # 不可能抽到比手牌数更多的牌
         return 0.0
     
     total_combinations = safe_comb(N, n)
@@ -75,9 +67,10 @@ def calculate_exact_prob(i, K, N, n):
 
 @st.cache_data
 def get_starter_probability_data(N, n):
-    
+    # 生成K值范围（0到N）
     plot_k_col = list(range(N + 1))
     
+    # 计算精确概率和累积概率
     P_exact_full = [[calculate_exact_prob(i, k, N, n) for k in range(-1, N + 2)] for i in range(n + 1)]
     P_cumulative_full = [[0.0] * (N + 3) for _ in range(n + 1)]
 
@@ -87,6 +80,7 @@ def get_starter_probability_data(N, n):
              p_sum += P_exact_full[i][k_idx]
              P_cumulative_full[i][k_idx] = p_sum
 
+    # 构建绘图数据框
     df_plot = pd.DataFrame({"K (Starters)": plot_k_col})
     df_plot["P(X >= 1)"] = P_cumulative_full[1][1 : N + 2]
     df_plot["P(X >= 2)"] = P_cumulative_full[2][1 : N + 2]
@@ -112,27 +106,51 @@ def get_starter_probability_data(N, n):
         P_exact_full[5]
     ]
 
-    turning_points = {} # 用于存储转折点
+    turning_points = {}  # 用于存储转折点
 
     for i_curve in range(5):
+        # 生成K值范围（1到N）
         table_K_col = list(range(1, N + 1))
         P_curve = data_sources[i_curve]
-        table_P_col = P_curve[2 : N + 2]
-        table_D_col = [P_curve[k+2] - P_curve[k+1] for k in range(len(table_K_col))]
-        table_C_col = [P_curve[k+3] - 2*P_curve[k+2] + P_curve[k+1] for k in range(len(table_K_col))]
+        # 提取对应K值的概率（修正索引对应关系）
+        table_P_col = [P_curve[k+1] for k in table_K_col]  # 关键修正：直接映射K值到索引
+        # 计算边际收益（当前K与前一个K的差值）
+        table_D_col = []
+        for k in range(len(table_K_col)):
+            if k == 0:
+                # 第一个点的边际收益用下一个点的差值近似
+                table_D_col.append(P_curve[table_K_col[k]+2] - P_curve[table_K_col[k]+1])
+            else:
+                table_D_col.append(P_curve[table_K_col[k]+1] - P_curve[table_K_col[k-1]+1])
         
-        # 计算转折点
-        if table_D_col:
+        # 计算曲率
+        table_C_col = [P_curve[k+2] - 2*P_curve[k+1] + P_curve[k] for k in range(len(table_K_col))]
+        
+        # 计算转折点（修正逻辑：确保边际收益计算正确对应K值）
+        if table_D_col and len(table_D_col) == len(table_K_col):
             try:
-                max_marginal_gain = max(table_D_col)
-                turning_point_idx = table_D_col.index(max_marginal_gain)
+                # 对于P(X=5)曲线，增加最小K值限制（必须至少有5张动点才可能抽到5张）
+                if i_curve == 4:  # 对应P(X=5)
+                    valid_indices = [idx for idx, k in enumerate(table_K_col) if k >= 5]
+                    if valid_indices:
+                        valid_d = [table_D_col[idx] for idx in valid_indices]
+                        max_marginal_gain = max(valid_d)
+                        turning_point_idx = valid_indices[valid_d.index(max_marginal_gain)]
+                    else:
+                        continue
+                else:
+                    max_marginal_gain = max(table_D_col)
+                    turning_point_idx = table_D_col.index(max_marginal_gain)
+                
+                # 获取对应的K值和概率值
                 turning_point_k = table_K_col[turning_point_idx]
                 turning_point_prob = table_P_col[turning_point_idx]
                 curve_name = df_plot.columns[i_curve]
                 turning_points[curve_name] = (turning_point_k, turning_point_prob)
-            except (ValueError, IndexError):
-                pass # 如果列表为空或找不到，则忽略
+            except (ValueError, IndexError) as e:
+                st.warning(f"计算转折点时出错 {curve_names[i_curve]}: {e}")
 
+        # 构建表格数据
         df_table = pd.DataFrame({
             "K (Starters / 动点)": table_K_col,
             "Probability / 概率": table_P_col,
@@ -140,6 +158,7 @@ def get_starter_probability_data(N, n):
             "Curvature / 曲率": table_C_col
         }).set_index("K (Starters / 动点)")
         
+        # 格式化显示
         df_display = df_table.copy()
         df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
         df_display["Marginal / 边际"] = df_display["Marginal / 边际"].map('{:+.4%}'.format)
@@ -190,9 +209,7 @@ def get_combo_probability_data(D, n, K_fixed):
 
 @st.cache_data
 def calculate_part3_prob_single(NE, D, K_fixed, i):
-    """
-    计算：5张手牌有i张系统外，6张牌中至少1张动点
-    """
+    """计算：5张手牌有i张系统外，6张牌中至少1张动点"""
     n = 5
     if i < 0 or i > 5 or NE < 0 or K_fixed < 0 or D < n:
         return 0.0
@@ -223,9 +240,7 @@ def calculate_part3_prob_single(NE, D, K_fixed, i):
 
 @st.cache_data
 def calculate_part3_prob_single_case7(NE, D, K_fixed):
-    """
-    特殊情况：5张手牌有5张系统外，6张牌中0张动点
-    """
+    """特殊情况：5张手牌有5张系统外，6张牌中0张动点"""
     n = 5
     if NE < 5 or K_fixed == 0: return 0.0
     Trash = D - NE - K_fixed
@@ -262,30 +277,48 @@ def get_part3_data(D, K_fixed):
     all_tables = []
     curve_names = ["C0: P(0 NE in 5, >=1 K in 6) / 抽5张含0系统外, 抽6张含>=1动点", "C1: P(1 NE in 5, >=1 K in 6) / 抽5张含1系统外, 抽6张含>=1动点", "C2: P(2 NE in 5, >=1 K in 6) / 抽5张含2系统外, 抽6张含>=1动点", "C3: P(3 NE in 5, >=1 K in 6) / 抽5张含3系统外, 抽6张含>=1动点", "C4: P(4 NE in 5, >=1 K in 6) / 抽5张含4系统外, 抽6张含>=1动点", "C6: P(5 NE in 5, >=1 K in 6) / 抽5张含5系统外, 抽6张含>=1动点", "C7: P(5 NE in 5, 0 K in 6) / 抽5张含5系统外, 抽6张含0动点"]
     
-    turning_points = {} # 存储转折点
+    turning_points = {}  # 存储转折点
     
-    internal_indices_map = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:7} # Map curve index to P_full index
+    internal_indices_map = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:7}  # 映射曲线索引到P_full索引
     
     for i_curve in range(len(df_plot.columns)):
         i_curve_internal = internal_indices_map.get(i_curve, i_curve)
         table_NE_col = list(range(max_NE + 1))
         P_curve = P_full[i_curve_internal]
-        table_P_col = P_curve[1 : max_NE + 2]
-        table_D_col = [P_curve[j+2] - P_curve[j+1] for j in range(len(table_NE_col))]
-        table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
+        # 修正概率值提取方式，确保与NE值正确对应
+        table_P_col = [P_curve[ne+1] for ne in table_NE_col]
+        # 修正边际收益计算
+        table_D_col = []
+        for idx in range(len(table_NE_col)):
+            if idx == 0:
+                table_D_col.append(P_curve[table_NE_col[idx]+2] - P_curve[table_NE_col[idx]+1])
+            else:
+                table_D_col.append(P_curve[table_NE_col[idx]+1] - P_curve[table_NE_col[idx-1]+1])
         
-        # 计算转折点
-        if table_D_col:
+        table_C_col = [P_curve[ne+2] - 2*P_curve[ne+1] + P_curve[ne] for ne in table_NE_col]
+        
+        # 计算转折点（增加曲线特定的有效范围限制）
+        if table_D_col and len(table_D_col) == len(table_NE_col):
             try:
-                max_marginal_gain = max(table_D_col)
-                turning_point_idx = table_D_col.index(max_marginal_gain)
-                turning_point_ne = table_NE_col[turning_point_idx]
-                turning_point_prob = table_P_col[turning_point_idx]
-                curve_name = df_plot.columns[i_curve]
-                turning_points[curve_name] = (turning_point_ne, turning_point_prob)
-            except (ValueError, IndexError):
-                pass
+                # 为不同曲线设置合理的有效范围
+                valid_indices = []
+                if "C7" in curve_names[i_curve_internal]:  # 特殊处理C7曲线
+                    valid_indices = [idx for idx, ne in enumerate(table_NE_col) if ne >= 5]
+                else:
+                    valid_indices = list(range(len(table_NE_col)))
+                    
+                if valid_indices:
+                    valid_d = [table_D_col[idx] for idx in valid_indices]
+                    max_marginal_gain = max(valid_d)
+                    turning_point_idx = valid_indices[valid_d.index(max_marginal_gain)]
+                    turning_point_ne = table_NE_col[turning_point_idx]
+                    turning_point_prob = table_P_col[turning_point_idx]
+                    curve_name = df_plot.columns[i_curve]
+                    turning_points[curve_name] = (turning_point_ne, turning_point_prob)
+            except (ValueError, IndexError) as e:
+                st.warning(f"计算转折点时出错 {curve_names[i_curve_internal]}: {e}")
 
+        # 构建表格
         df_table = pd.DataFrame({"NE (Non-Engine / 系统外)": table_NE_col, "Probability / 概率": table_P_col, "Marginal / 边际": table_D_col, "Curvature / 曲率": table_C_col}).set_index("NE (Non-Engine / 系统外)")
         df_display = df_table.copy()
         df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
@@ -318,17 +351,25 @@ def get_part3_cumulative_data(D, K_fixed):
     all_tables = []
     curve_names = ["C_ge1: P(>=1 NE in 5, >=1 K in 6) / 抽5张含>=1系统外, 抽6张含>=1动点", "C_ge2: P(>=2 NE in 5, >=1 K in 6) / 抽5张含>=2系统外, 抽6张含>=1动点", "C_ge3: P(>=3 NE in 5, >=1 K in 6) / 抽5张含>=3系统外, 抽6张含>=1动点", "C_ge4: P(>=4 NE in 5, >=1 K in 6) / 抽5张含>=4系统外, 抽6张含>=1动点", "C_ge5: P(>=5 NE in 5, >=1 K in 6) / 抽5张含>=5系统外, 抽6张含>=1动点"]
     
-    turning_points = {} # 存储转折点
+    turning_points = {}  # 存储转折点
 
     for i_curve in range(5): 
         table_NE_col = list(range(max_NE + 1))
         P_curve = P_cumulative_full[i_curve] 
-        table_P_col = P_curve[1 : max_NE + 2] 
-        table_D_col = [P_curve[j+2] - P_curve[j+1] for j in range(len(table_NE_col))]
-        table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
+        # 修正概率值提取
+        table_P_col = [P_curve[ne+1] for ne in table_NE_col]
+        # 修正边际收益计算
+        table_D_col = []
+        for idx in range(len(table_NE_col)):
+            if idx == 0:
+                table_D_col.append(P_curve[table_NE_col[idx]+2] - P_curve[table_NE_col[idx]+1])
+            else:
+                table_D_col.append(P_curve[table_NE_col[idx]+1] - P_curve[table_NE_col[idx-1]+1])
+        
+        table_C_col = [P_curve[ne+2] - 2*P_curve[ne+1] + P_curve[ne] for ne in table_NE_col]
         
         # 计算转折点
-        if table_D_col:
+        if table_D_col and len(table_D_col) == len(table_NE_col):
             try:
                 max_marginal_gain = max(table_D_col)
                 turning_point_idx = table_D_col.index(max_marginal_gain)
@@ -336,9 +377,10 @@ def get_part3_cumulative_data(D, K_fixed):
                 turning_point_prob = table_P_col[turning_point_idx]
                 curve_name = df_plot.columns[i_curve]
                 turning_points[curve_name] = (turning_point_ne, turning_point_prob)
-            except (ValueError, IndexError):
-                pass
+            except (ValueError, IndexError) as e:
+                st.warning(f"计算转折点时出错 {curve_names[i_curve]}: {e}")
         
+        # 构建表格
         df_table = pd.DataFrame({"NE (Non-Engine / 系统外)": table_NE_col, "Probability / 概率": table_P_col, "Marginal / 边际": table_D_col, "Curvature / 曲率": table_C_col}).set_index("NE (Non-Engine / 系统外)")
         df_display = df_table.copy()
         df_display["Probability / 概率"] = df_display["Probability / 概率"].map('{:.4%}'.format)
@@ -395,7 +437,7 @@ def get_part4_data(D, K_fixed):
     return df_plot, all_tables
 
 
-# ===== GoatCounter & Google Analytics =====
+# ===== 统计分析脚本 =====
 GOATCOUNTER_SCRIPT = """
 <script data-goatcounter="https://mikhaelise.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 """
@@ -420,16 +462,16 @@ if not st.session_state.ga_injected:
     """
     components.html(GA_SCRIPT, height=0)
     st.session_state.ga_injected = True
-# ===== End of Analytics scripts =====
+# ===== 统计分析脚本结束 =====
 
-# --- Sidebar ---
+# --- 侧边栏 ---
 try:
     img = Image.open("avatar.png") 
     target_width=150; w_percent=(target_width/float(img.size[0])); target_height=int((float(img.size[1])*float(w_percent)))
     img_resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
     st.sidebar.image(img_resized)
 except FileNotFoundError: st.sidebar.caption("avatar.png not found.")
-except Exception as e: st.sidebar.error(f"Error loading image: {e}")
+except Exception as e: st.sidebar.error(f"加载图片出错: {e}")
 
 st.sidebar.markdown("Made by mikhaElise")
 st.sidebar.markdown("Bilibili: https://b23.tv/9aM3G4T")
@@ -443,7 +485,7 @@ K_HIGHLIGHT = st.sidebar.number_input("4. Highlight Starter Value (K) / 高亮�
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
 max_ne_possible = max(0, max_ne_possible) 
 NE_HIGHLIGHT = st.sidebar.number_input("5. Non-engine Size（NE）/系统外数量", min_value=0, max_value=max_ne_possible, value=min(20, max_ne_possible), step=1, help=f"输入一个 NE 值 (0 到 {max_ne_possible})，将在 Part 3 和 4 图表下方显示该点的精确概率。")
-# --- End of Sidebar ---
+# --- 侧边栏结束 ---
 
 st.title("YGO Opening Hand Probability Calculator / YGO起手概率计算器")
 st.write(f"Current Settings / 当前设置: **{DECK_SIZE}** Card Deck / 卡组总数, **{HAND_SIZE}** Card Hand / 起手卡数")
@@ -460,7 +502,7 @@ st.latex(r"P(X \geq x) = 1 - \sum_{i=0}^{x-1} \frac{\binom{K}{i} \binom{D-K}{n-i
 
 df_plot_1, all_tables_1, turning_points_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 
-# 使用 Altair 绘制图表，转折点使用与曲线相同颜色的高亮圆点
+# 使用 Altair 绘制图表，转折点使用高亮圆点
 df_plot_1_melted = df_plot_1.reset_index().melt('K (Starters)', var_name='Curve', value_name='Probability')
 base_chart_1 = alt.Chart(df_plot_1_melted).encode(
     x=alt.X('K (Starters):Q', title='K (Number of Starters in Deck)'),
@@ -480,13 +522,13 @@ for curve, (k_val, prob_val) in turning_points_1.items():
         'label': f'TP: K={k_val}'
     })
 
-# 绘制转折点圆点（与对应曲线同色）
+# 绘制转折点圆点
 if tp_data_1:
     tp_df_1 = pd.DataFrame(tp_data_1)
     points_1 = alt.Chart(tp_df_1).encode(
         x='K (Starters):Q',
         y='Probability:Q',
-        color='Curve:N',  # 使用与曲线相同的颜色
+        color=alt.value('red'),
         size=alt.value(100),
         tooltip=['label', alt.Tooltip('Probability', format='.4%')]
     ).mark_circle(stroke='black', strokeWidth=2)
@@ -496,23 +538,16 @@ if tp_data_1:
 else:
     st.altair_chart(lines_1.interactive(), use_container_width=True)
 
-# 边际效益分析 - 表格形式
-st.write("**边际效益分析 (Marginal Utility Analysis):**")
-st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)，即增加一个单位带来的概率提升最大的点。")
+# 边际效益分析
+st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
+st.write("上图中红色圆点标示出了每条曲线上边际效益最高点 (The point of maximum marginal gain)。这代表在该点（K值）增加一张动点带来的概率提升是最大的。超过这个点后，每再增加一张动点，其带来的概率提升将开始减少（收益递减）。各曲线的转折点如下：")
 if turning_points_1:
-    # 准备表格数据
-    table_data = []
-    for curve, (k_val, prob_val) in turning_points_1.items():
-        table_data.append({
-            "曲线": curve.split('/')[0].strip(),
-            "转折点": k_val,
-            "转折点概率": f"{prob_val:.4%}"
-        })
-    # 创建并显示表格
-    tp_df = pd.DataFrame(table_data)
-    st.dataframe(tp_df, use_container_width=True)
-else:
-    st.write("未找到有效的边际效益转折点。")
+    tp_cols_1 = st.columns(len(turning_points_1))
+    i = 0
+    for curve, (k_val, _) in turning_points_1.items():
+        with tp_cols_1[i]:
+            st.metric(label=f"转折点: {curve.split('/')[0].strip()}", value=f"K = {k_val}")
+        i += 1
 
 if K_HIGHLIGHT in df_plot_1.index:
     highlight_data_1 = df_plot_1.loc[K_HIGHLIGHT]
@@ -526,8 +561,8 @@ if K_HIGHLIGHT in df_plot_1.index:
                 st.metric(label=col_name.split('/')[0].strip(), value=f"{prob:.2%}") 
                 col_idx_1 += 1
 else:
-    st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}).")
-st.header(f"Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
+    st.caption(f"K={K_HIGHLIGHT}的值在本图表中不可用（最大K值为{DECK_SIZE}）。")
+st.header(f"📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
 for (table_name, table_data) in all_tables_1:
     with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
@@ -541,11 +576,11 @@ st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** 
 st.caption("Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards. / 注：此计算假设动点 (K) 和杀虫剂 (A) 是完全不重叠的两组卡。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
-    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+    st.error(f"错误: 固定动点数 (K={STARTER_COUNT_K}) 必须小于卡组总数 (D={DECK_SIZE})。")
 else:
     max_A_part2 = DECK_SIZE - STARTER_COUNT_K
     if max_A_part2 < 0:
-         st.warning("Warning: K is larger than Deck Size.")
+         st.warning("警告: 动点数大于卡组总数。")
     else:
         st.subheader("Probability Formula / 概率公式")
         st.latex(r"P(\text{...}) = 1 - \frac{\binom{D-A}{n} + \binom{D-K}{n} - \binom{D-K-A}{n}}{\binom{D}{n}}")
@@ -561,7 +596,7 @@ else:
         lines_2 = base_chart_2.mark_line()
         st.altair_chart(lines_2.interactive(), use_container_width=True)
 
-        st.header(f"Probability Table (A=0 to {max_A_part2}) / 概率表")
+        st.header(f"📊 Probability Table (A=0 to {max_A_part2}) / 概率表")
         df_display_2 = df_table_2.copy()
         df_display_2["Probability / 概率"] = df_display_2["Probability / 概率"].map('{:.4%}'.format)
         df_display_2["P(A+1) - P(A) (Marginal / 边际)"] = df_display_2["P(A+1) - P(A) (Marginal / 边际)"].map('{:+.4%}'.format)
@@ -577,9 +612,9 @@ st.header("Part 3, Chart 1: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6) / 
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 
 if STARTER_COUNT_K >= DECK_SIZE:
-    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+    st.error(f"错误: 固定动点数 (K={STARTER_COUNT_K}) 必须小于卡组总数 (D={DECK_SIZE})。")
 elif max_ne_possible < 0:
-     st.warning(f"Warning: K ({STARTER_COUNT_K}) + Highlighted NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}).")
+     st.warning(f"警告: 动点数 ({STARTER_COUNT_K}) + 高亮系统外数量 ({NE_HIGHLIGHT}) 不能超过卡组总数 ({DECK_SIZE})。")
 else:
     max_NE = max_ne_possible
     df_plot_3, all_tables_3, turning_points_3 = get_part3_data(DECK_SIZE, STARTER_COUNT_K)
@@ -604,13 +639,13 @@ else:
             'label': f'TP: NE={ne_val}'
         })
     
-    # 绘制转折点圆点（与对应曲线同色）
+    # 绘制转折点圆点
     if tp_data_3:
         tp_df_3 = pd.DataFrame(tp_data_3)
         points_3 = alt.Chart(tp_df_3).encode(
             x='NE (Non-Engine):Q',
             y='Probability:Q',
-            color='Curve:N',  # 使用与曲线相同的颜色
+            color=alt.value('red'),
             size=alt.value(100),
             tooltip=['label', alt.Tooltip('Probability', format='.4%')]
         ).mark_circle(stroke='black', strokeWidth=2)
@@ -619,23 +654,16 @@ else:
     else:
         st.altair_chart(lines_3.interactive(), use_container_width=True)
 
-    # 边际效益分析 - 表格形式
-    st.write("**边际效益分析 (Marginal Utility Analysis):**")
-    st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)。")
+    # 边际效益分析
+    st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
+    st.write("上图中红色圆点标示了每条曲线收益递减的转折点。各曲线转折点如下：")
     if turning_points_3:
-        # 准备表格数据
-        table_data = []
-        for curve, (ne_val, prob_val) in turning_points_3.items():
-            table_data.append({
-                "曲线": curve.split('/')[0].strip(),
-                "转折点": ne_val,
-                "转折点概率": f"{prob_val:.4%}"
-            })
-        # 创建并显示表格
-        tp_df = pd.DataFrame(table_data)
-        st.dataframe(tp_df, use_container_width=True)
-    else:
-        st.write("未找到有效的边际效益转折点。")
+        tp_cols_3 = st.columns(min(len(turning_points_3), 5))  # 避免过多列
+        i = 0
+        for curve, (ne_val, _) in turning_points_3.items():
+            with tp_cols_3[i % 5]:
+                st.metric(label=f"转折点: {curve.split('/')[0].strip()}", value=f"NE = {ne_val}")
+            i += 1
     
     if NE_HIGHLIGHT in df_plot_3.index:
         highlight_data = df_plot_3.loc[NE_HIGHLIGHT]
@@ -645,7 +673,7 @@ else:
             if not pd.isna(prob): 
                  with cols[idx]:
                     st.metric(label=col_name.split('(')[0].strip(), value=f"{prob:.2%}") 
-    st.header(f"Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     for (table_name, table_data) in all_tables_3:
         with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
@@ -680,13 +708,13 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
             'label': f'TP: NE={ne_val}'
         })
     
-    # 绘制转折点圆点（与对应曲线同色）
+    # 绘制转折点圆点
     if tp_data_3c:
         tp_df_3c = pd.DataFrame(tp_data_3c)
         points_3c = alt.Chart(tp_df_3c).encode(
             x='NE (Non-Engine):Q',
             y='Probability:Q',
-            color='Curve:N',  # 使用与曲线相同的颜色
+            color=alt.value('red'),
             size=alt.value(100),
             tooltip=['label', alt.Tooltip('Probability', format='.4%')]
         ).mark_circle(stroke='black', strokeWidth=2)
@@ -695,23 +723,16 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
     else:
         st.altair_chart(lines_3c.interactive(), use_container_width=True)
 
-    # 边际效益分析 - 表格形式
-    st.write("**边际效益分析 (Marginal Utility Analysis):**")
-    st.write("下表显示了每条曲线上边际效益最高点 (Maximum marginal gain)。")
+    # 边际效益分析
+    st.write("📈 **边际效益分析 (Marginal Utility Analysis):**")
+    st.write("上图中红色圆点标示了每条曲线收益递减的转折点。各曲线转折点如下：")
     if turning_points_3c:
-        # 准备表格数据
-        table_data = []
-        for curve, (ne_val, prob_val) in turning_points_3c.items():
-            table_data.append({
-                "曲线": curve.split('(')[0].strip(),
-                "转折点": ne_val,
-                "转折点概率": f"{prob_val:.4%}"
-            })
-        # 创建并显示表格
-        tp_df = pd.DataFrame(table_data)
-        st.dataframe(tp_df, use_container_width=True)
-    else:
-        st.write("未找到有效的边际效益转折点。")
+        tp_cols_3c = st.columns(len(turning_points_3c))
+        i = 0
+        for curve, (ne_val, _) in turning_points_3c.items():
+            with tp_cols_3c[i]:
+                st.metric(label=f"转折点: {curve.split('(')[0].strip()}", value=f"NE = {ne_val}")
+            i += 1
     
     if NE_HIGHLIGHT in df_plot_3_cumulative.index:
         highlight_data_cumul = df_plot_3_cumulative.loc[NE_HIGHLIGHT]
@@ -721,7 +742,7 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
             if not pd.isna(prob):
                  with cols_cumul[idx]:
                     st.metric(label=col_name.split('(')[0].strip(), value=f"{prob:.2%}") 
-    st.header(f"Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
+    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     for (table_name, table_data) in all_tables_3_cumulative:
         with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
@@ -755,12 +776,12 @@ if STARTER_COUNT_K < DECK_SIZE and max_ne_possible >= 0:
             if not pd.isna(prob):
                 with cols_4[idx]:
                     st.metric(label=col_name.split('(')[0].strip(), value=f"{prob:.2%}") 
-    st.header(f"Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4}) / 概率表")
     for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"): st.dataframe(table_data, use_container_width=True)
 
 
-# --- Footer ---
+# --- 页脚 ---
 st.divider()
 st.caption("Note: Don't dive it. Cuz the data is just for reference only. / 注：请勿过度执着计算，数据仅供参考。") 
 
@@ -777,4 +798,4 @@ try:
 except FileNotFoundError:
     st.caption("meme.png not found. (Place it in the same folder as the script)")
 except Exception as e:
-    st.error(f"Error loading meme image: {e}")
+    st.error(f"加载图片出错: {e}")
