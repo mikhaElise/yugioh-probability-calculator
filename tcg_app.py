@@ -471,7 +471,7 @@ if not st.session_state.ga_injected:
       function gtag(){{dataLayer.push(arguments);}}
       gtag('js', new Date());
       gtag('config', '{GA_ID}', {{
-        'page_title': 'TCG Probability Calculator',
+        'page_title': 'YGO Probability Calculator',
         'page_location': window.location.href
       }});
     </script>
