@@ -223,6 +223,66 @@ def get_starter_probability_data(N, n):
 
     return df_plot, all_tables
 
+@st.cache_data
+def get_combo_probability_data(D, n, K_fixed):
+    """
+    Part 2: 计算至少1张动点且至少1张杀虫剂的概率
+    """
+    max_A = D - K_fixed
+    if max_A < 0:
+        max_A = 0
+    
+    # 计算总组合数
+    total_comb = safe_comb(D, n)
+    if total_comb == 0:
+        return pd.DataFrame(), pd.DataFrame()
+    
+    # 计算没有动点的组合数
+    comb_not_K = safe_comb(D - K_fixed, n)
+    
+    # 计算概率值
+    P_values_full = []
+    for a in range(-1, max_A + 2):
+        if a < 0:
+            P_values_full.append(0.0)
+            continue
+            
+        # 计算没有杀虫剂的组合数
+        comb_not_A = safe_comb(D - a, n)
+        # 计算既没有动点也没有杀虫剂的组合数
+        comb_not_A_and_not_K = safe_comb(D - K_fixed - a, n)
+        
+        # 计算至少缺少一个的概率
+        prob_A_is_0_or_K_is_0_num = (comb_not_A + comb_not_K - comb_not_A_and_not_K)
+        prob_A_is_0_or_K_is_0 = prob_A_is_0_or_K_is_0_num / total_comb
+        
+        # 至少有一个动点和一个杀虫剂的概率
+        prob_at_least_one_of_each = 1.0 - prob_A_is_0_or_K_is_0
+        P_values_full.append(prob_at_least_one_of_each)
+
+    # 创建图表数据
+    plot_A_col = list(range(max_A + 1))
+    plot_P_col = P_values_full[1 : max_A + 2]
+    df_plot = pd.DataFrame({
+        "A (Insecticides)": plot_A_col, 
+        "Probability": plot_P_col     
+    }).set_index("A (Insecticides)")
+
+    # 创建表格数据
+    table_A_col = list(range(max_A + 1))
+    table_P_col = P_values_full[1 : max_A + 2]
+    table_D_col = [P_values_full[i+2] - P_values_full[i+1] for i in range(len(table_A_col))]
+    table_C_col = [P_values_full[i+2] - 2*P_values_full[i+1] + P_values_full[i] for i in range(len(table_A_col))]
+    
+    df_table = pd.DataFrame({
+        "A (Insecticides / 杀虫剂)": table_A_col, 
+        "Probability / 概率": table_P_col,
+        "P(A+1) - P(A) (Marginal / 边际)": table_D_col,
+        "P(A+1)-2P(A)+P(A-1) (Curvature / 曲率)": table_C_col
+    }).set_index("A (Insecticides / 杀虫剂)")
+    
+    return df_plot, df_table
+
 # ===== GoatCounter 代码 =====
 GOATCOUNTER_SCRIPT = """
 <script data-goatcounter="https://mikhaelise.goatcounter.com/count"
