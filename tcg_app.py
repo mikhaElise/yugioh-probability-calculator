@@ -32,7 +32,7 @@ def find_optimal_range(marginal_gains, x_values, threshold_ratio=0.3):
         return None
     
     max_gain = max(marginal_gains)
-    threshold = max极_gain * threshold_ratio
+    threshold = max_gain * threshold_ratio
     
     optimal_indices = [i for i, gain in enumerate(marginal_gains) if gain >= threshold]
     
@@ -80,8 +80,8 @@ def marginal_benefit_analysis(probabilities, x_values, curve_name):
         if i < len(marginal_changes) and marginal_changes[i-1] < 0:
             turning_points.append({
                 'x_value': x_values[i+1] if i+1 < len(x_values) else x_values[-1],
-                'probability': probabilities[i+1] if极 i+1 < len(probabilities) else probabilities[-1],
-                'marginal_gain': marginal极_gains[i],
+                'probability': probabilities[i+1] if i+1 < len(probabilities) else probabilities[-1],
+                'marginal_gain': marginal_gains[i],
                 'marginal_change': marginal_changes[i-1],
                 'position': i+1
             })
@@ -132,7 +132,7 @@ def calculate_single_prob(K, N, n):
         K = N
         
     total_combinations = safe_comb(N, n)
-    if total_combinations极 == 0:
+    if total_combinations == 0:
         return 0.0
 
     num_non_starters = N - K
@@ -143,7 +143,7 @@ def calculate_single_prob(K, N, n):
 
 @st.cache_data
 def calculate_exact_prob(i, K, N, n):
-    if n == 极0:
+    if n == 0:
         return 0.0
     if K < i:
         return 0.0
@@ -173,12 +173,12 @@ def get_starter_probability_data(N, n):
         p_sum = 0.0
         for i in range(n, -1, -1):
              p_sum += P_exact_full[i][k_idx]
-             P_cumulative_full[i][k_idx极] = p_sum
+             P_cumulative_full[i][k_idx] = p_sum
 
     df_plot = pd.DataFrame({"K (Starters)": plot_k_col})
     df_plot["P(X >= 1)"] = P_cumulative_full[1][1 : N + 2]
-    df_plot["P(X >= 2)"] = P_cumulative_full[2][1 : N极 + 2]
-    df_plot["P(X >= 3)"] = P_cumulative_full[3][极1 : N + 2]
+    df_plot["P(X >= 2)"] = P_cumulative_full[2][1 : N + 2]
+    df_plot["P(X >= 3)"] = P_cumulative_full[3][1 : N + 2]
     df_plot["P(X >= 4)"] = P_cumulative_full[4][1 : N + 2]
     df_plot["P(X = 5)"] = P_exact_full[5][1 : N + 2]
     df_plot = df_plot.set_index("K (Starters)")
@@ -188,7 +188,7 @@ def get_starter_probability_data(N, n):
         "P(X >= 1) / 至少1张动点",
         "P(X >= 2) / 至少2张动点",
         "P(X >= 3) / 至少3张动点",
-        "P(X >= 4极) / 至少4张动点",
+        "P(X >= 4) / 至少4张动点",
         "P(X = 5) / 正好5张动点"
     ]
     
@@ -225,7 +225,7 @@ def get_starter_probability_data(N, n):
 
 # ===== GoatCounter 代码 =====
 GOATCOUNTER_SCRIPT = """
-<script data-goatcounter="https://mikhaelise.goatcounter极.com/count"
+<script data-goatcounter="https://mikhaelise.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 """
 if 'gc_injected' not in st.session_state:
@@ -288,7 +288,7 @@ HAND_SIZE = st.sidebar.number_input(
     "2. Opening Hand Size (n) / 起手数", 
     min_value=0, 
     max_value=10, 
-极    value=5,
+    value=5,
     step=1,
     help="设置起手抽几张牌 (0-10)"
 )
@@ -332,10 +332,10 @@ st.write("This chart shows the probability of drawing specific numbers of 'Start
 # --- Part 1 概率公式 ---
 st.subheader("Probability Formulas / 概率公式")
 st.latex(r"P(X \geq 1) = 1 - \frac{\binom{D-K}{n}}{\binom{D}{n}}")
-st.latex(r极"P(X \geq 2) = 1 - \sum_{i=0}^{1} \frac{\binom{K}{极i} \binom{D-K}{n-i}}{\binom{D}{n}}")
+st.latex(r"P(X \geq 2) = 1 - \sum_{i=0}^{1} \frac{\binom{K}{i} \binom{D-K}{n-i}}{\binom{D}{n}}")
 st.latex(r"P(X \geq 3) = 1 - \sum_{i=0}^{2} \frac{\binom{K}{i} \binom{D-K}{n-i}}{\binom{D}{n}}")
 st.latex(r"P(X \geq 4) = 1 - \sum_{i=0}^{3} \frac{\binom{K}{i} \binom{D-K}{n-i}}{\binom{D}{n}}")
-st.latex(r"P(X = 5) = \frac{\binom{K}{5} \binom{D-K}{n-5}}{\binom极{D}{n}}")
+st.latex(r"P(X = 5) = \frac{\binom{K}{5} \binom{D-K}{n-5}}{\binom{D}{n}}")
 st.caption("Where D = Deck Size, K = Starter Count, n = Hand Size / 其中 D = 卡组总数, K = 动点数, n = 起手数")
 
 # 获取数据
@@ -392,7 +392,7 @@ if marginal_results:
         st.write("### 🔍🔍 详细转折点分析")
         for curve_name, analysis in marginal_results.items():
             if analysis['main_turning_point']:
-                with st.expander(f"**{curve极_name}** 的边际效益分析"):
+                with st.expander(f"**{curve_name}** 的边际效益分析"):
                     tp = analysis['main_turning_point']
                     
                     col1, col2, col3 = st.columns(3)
@@ -408,7 +408,7 @@ if marginal_results:
                         marginal_df = pd.DataFrame({
                             'K值': df_plot_1.index[1:len(analysis['marginal_gains'])+1],
                             '边际效益': analysis['marginal_gains']
-                        }).set_index('极K值')
+                        }).set_index('K值')
                         
                         st.line_chart(marginal_df, use_container_width=True)
                         st.caption(f"{curve_name} 的边际效益变化曲线")
@@ -416,14 +416,13 @@ else:
     st.info("数据不足进行边际效益分析")
 
 st.header(f"📊📊 Probability Tables (K=1 to {DECK_SIZE}) / 概率表") 
-st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+极1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
+st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each curve. / 表格显示每条曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
     with st.expander(f"**{table_name}**"):
         st.dataframe(table_data, use_container_width=True)
 
 # Part 1 结束
-
 
 st.divider()
 st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / Part 2: P(至少1动点 且 至少1杀虫剂)")
