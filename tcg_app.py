@@ -18,7 +18,6 @@ st.set_page_config(
 # --- 页面配置结束 ---
 
 @st.cache_data
-@st.cache_data
 def marginal_benefit_analysis(probabilities, x_values, curve_name):
     """
     边际效益分析：找到收益递减的转折点
