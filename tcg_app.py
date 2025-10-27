@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import math
 from PIL import Image
@@ -440,7 +441,19 @@ def get_part4_data(D, K_fixed):
     return df_plot, all_tables
 
 st.set_page_config(layout="wide")
+GA_ID = "G-NKZ1V5K6B3" 
 
+GA_SCRIPT = f"""
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+
+      gtag('config', '{GA_ID}');
+    </script>
+"""
+components.html(GA_SCRIPT, height=0)
 st.sidebar.markdown("Made by mikhaElise")
 
 try:
