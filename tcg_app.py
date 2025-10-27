@@ -778,7 +778,7 @@ else:
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.caption("Note: Data is for reference only. / 注：数据仅供参考。") # <-- Order reversed
+st.caption("Note: Don't dive it. Cuz the data is just for reference only. / 注：请勿过度执着计算，数据仅供参考。") 
 
 try:
     img_meme = Image.open("meme.png") 
