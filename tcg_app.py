@@ -165,7 +165,7 @@ def calculate_part3_prob_single(NE, D, K_fixed, i):
     if Trash < 0 and i!=7: 
         if NE >= (D-K_fixed): pass 
         else: return 0.0
-    elif Trash < -i and i==7: 
+    elif Trash < 0 and i==7: 
          return 0.0
 
     total_deck_draw_5 = safe_comb(D, n)
@@ -356,6 +356,89 @@ def get_part3_cumulative_data(D, K_fixed):
 
     return df_plot, all_tables
 
+@st.cache_data
+def calculate_part4_prob_single(NE, D, K_fixed, i):
+    n_draw = 6
+    j = n_draw - i 
+    
+    if i < 0 or j < 0:
+        return 0.0
+    if K_fixed < j: 
+        return 0.0
+    if NE < i:    
+        return 0.0
+        
+    Trash = D - K_fixed - NE
+    if Trash < 0: 
+        if Trash == 0 and n_draw == i + j : pass
+        else: return 0.0
+
+    total_combinations = safe_comb(D, n_draw)
+    if total_combinations == 0:
+        return 0.0
+
+    ways_to_draw_exact = safe_comb(NE, i) * safe_comb(K_fixed, j) * safe_comb(Trash, 0) # Added C(Trash, 0) for clarity
+    
+    return ways_to_draw_exact / total_combinations
+
+@st.cache_data
+def get_part4_data(D, K_fixed):
+    max_NE = D - K_fixed
+    
+    P_full = [[] for _ in range(7)] 
+
+    for ne_val in range(-1, max_NE + 2):
+        for i in range(1, 7): 
+            P_full[i].append(calculate_part4_prob_single(ne_val, D, K_fixed, i))
+
+    plot_NE_col = list(range(max_NE + 1))
+    df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col})
+    df_plot[f"C1 (1NE, 5K)"] = P_full[1][1 : max_NE + 2]
+    df_plot[f"C2 (2NE, 4K)"] = P_full[2][1 : max_NE + 2]
+    df_plot[f"C3 (3NE, 3K)"] = P_full[3][1 : max_NE + 2]
+    df_plot[f"C4 (4NE, 2K)"] = P_full[4][1 : max_NE + 2]
+    df_plot[f"C5 (5NE, 1K)"] = P_full[5][1 : max_NE + 2]
+    df_plot[f"C6 (6NE, 0K)"] = P_full[6][1 : max_NE + 2]
+    
+    df_plot = df_plot.set_index("NE (Non-Engine)")
+
+    all_tables = []
+    curve_names = [
+        "", 
+        "C1: P(1 NE, 5 K in 6)",
+        "C2: P(2 NE, 4 K in 6)",
+        "C3: P(3 NE, 3 K in 6)",
+        "C4: P(4 NE, 2 K in 6)",
+        "C5: P(5 NE, 1 K in 6)",
+        "C6: P(6 NE, 0 K in 6)"
+    ]
+    
+    for i_curve in range(1, 7): 
+        
+        table_NE_col = list(range(max_NE + 1))
+        P_curve = P_full[i_curve] 
+        
+        table_P_col = P_curve[1 : max_NE + 2] 
+        table_D_col = [P_curve[j+2] - P_curve[j+1] for j in range(len(table_NE_col))]
+        table_C_col = [P_curve[j+2] - 2*P_curve[j+1] + P_curve[j] for j in range(len(table_NE_col))]
+        
+        df_table = pd.DataFrame({
+            "NE (Non-Engine)": table_NE_col,
+            "Probability": table_P_col,
+            "Marginal": table_D_col,
+            "Curvature": table_C_col
+        })
+        df_table = df_table.set_index("NE (Non-Engine)")
+        
+        df_display = df_table.copy()
+        df_display["Probability"] = df_display["Probability"].map('{:.4%}'.format)
+        df_display["Marginal"] = df_display["Marginal"].map('{:+.4%}'.format)
+        df_display["Curvature"] = df_display["Curvature"].map('{:+.4%}'.format)
+        
+        all_tables.append((curve_names[i_curve], df_display))
+
+    return df_plot, all_tables
+
 st.set_page_config(layout="wide")
 
 st.sidebar.markdown("Made by mikhaElise")
@@ -389,7 +472,7 @@ HAND_SIZE = st.sidebar.number_input(
     max_value=10, 
     value=5,
     step=1,
-    help="Set your opening hand size (0-10). Note: Part 3 calculations are hard-coded for opening 5, drawing 1."
+    help="Set your opening hand size (0-10). Note: Part 3&4 calculations assume opening 5, drawing 1 (total 6 cards)."
 )
 STARTER_COUNT_K = st.sidebar.number_input(
     "3. Fixed Starter Count (K)",
@@ -397,16 +480,16 @@ STARTER_COUNT_K = st.sidebar.number_input(
     max_value=60,
     value=24,
     step=1,
-    help="Set the FIXED number of starters (K) for Part 2 and Part 3 calculations."
+    help="Set the FIXED number of starters (K) for Part 2, 3 and 4 calculations."
 )
 
 st.title("TCG Opening Hand Probability Calculator")
 st.write(f"Current Settings: **{DECK_SIZE}** Card Deck, **{HAND_SIZE}** Card Hand")
-st.caption(f"Part 2 & 3 Fixed Starter Count (K) = **{STARTER_COUNT_K}**")
+st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) = **{STARTER_COUNT_K}**")
 
 
 st.header("Part 1: P(At least X Starter)")
-st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K), as K (the X-axis) increases.")
+st.write("This chart shows the probability of drawing specific numbers of 'Starter' cards (K) in your opening hand (n cards), as K (the X-axis) increases.")
 df_plot_1, df_table_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE)
 st.line_chart(df_plot_1)
 st.header(f"📊 Probability Table for P(X>=1) (K=1 to {DECK_SIZE})")
@@ -420,7 +503,7 @@ st.dataframe(df_display_1, use_container_width=True, height=300)
 
 st.divider()
 st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide')")
-st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases.")
+st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards).")
 st.caption("⚠️ Assumption: This calculation assumes 'Starters' (K) and 'Insecticides' (A) are separate, non-overlapping sets of cards.")
 
 if STARTER_COUNT_K >= DECK_SIZE:
@@ -441,7 +524,7 @@ st.divider()
 st.header("Part 3, Chart 1: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash)")
-st.caption("Note: Calculations for this part are hard-coded for an opening hand of 5, drawing a 6th card.")
+st.caption("Note: Calculations are for opening 5, drawing 1 (total 6 cards).")
 
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
@@ -461,7 +544,7 @@ else:
 st.divider()
 st.header("Part 3, Chart 2: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6)")
 st.write(f"This chart shows the cumulative probability. It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
-st.caption("Note: Calculations assume opening 5, drawing 1.")
+st.caption("Note: Calculations assume opening 5, drawing 1 (total 6 cards).")
 
 if STARTER_COUNT_K >= DECK_SIZE:
     st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
@@ -475,5 +558,26 @@ else:
     st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
 
     for (table_name, table_data) in all_tables_3_cumulative:
+        with st.expander(f"**{table_name}**"):
+            st.dataframe(table_data, use_container_width=True)
+
+st.divider()
+st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards)")
+st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**.")
+st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash)")
+st.caption("Note: Calculations are for drawing exactly 6 cards.")
+
+if STARTER_COUNT_K >= DECK_SIZE:
+    st.error(f"Error: Fixed Starter Count (K={STARTER_COUNT_K}) must be less than Total Deck Size (D={DECK_SIZE}).")
+else:
+    max_NE_4 = DECK_SIZE - STARTER_COUNT_K
+    df_plot_4, all_tables_4 = get_part4_data(DECK_SIZE, STARTER_COUNT_K)
+    
+    st.line_chart(df_plot_4)
+    
+    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_4})")
+    st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)).")
+
+    for (table_name, table_data) in all_tables_4:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
