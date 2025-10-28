@@ -604,7 +604,8 @@ st.latex(r"P(X \geq i) = 1 - \sum_{j=0}^{i-1} P(X=j)")
 st.latex(r"P(X = j) = \frac{\binom{K}{j} \binom{D-K}{n-j}}{\binom{D}{n}}")
 st.caption("Where D = Deck Size, K = Starter Count, n = Hand Size, i = Min Starters, j = Exact Starters / 其中 D = 卡组总数, K = 动点数, n = 起手数, i = 至少动点数, j = 正好动点数")
 
-df_plot_1, all_tables_1 = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
+
+df_plot_1, all_tables_1, df_plot_1b, all_tables_1b = get_starter_probability_data(DECK_SIZE, HAND_SIZE)
 st.line_chart(df_plot_1)
 
 if K_HIGHLIGHT in df_plot_1.index:
