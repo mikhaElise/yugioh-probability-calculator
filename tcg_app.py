@@ -967,9 +967,9 @@ try:
     
     img_meme_resized = img_meme.resize((target_width_meme, target_height_meme), Image.Resampling.LANCZOS)
     
-    # --- (修改) 将图片放在右下角 ---
-    st.image(img_meme_resized, use_container_width=True, output_format='PNG') # Use auto width, ensure PNG for transparency if needed
-    # --- 修改结束 ---
+
+    st.image(img_meme_resized, width=300, output_format='PNG') 
+    
     
 except FileNotFoundError:
     st.caption("meme.png not found. (Place it in the same folder as the script)")
