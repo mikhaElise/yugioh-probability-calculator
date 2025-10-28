@@ -711,7 +711,7 @@ if K_HIGHLIGHT in df_plot_1.index:
 else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f"📊 Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each cumulative curve. / 表格显示每条累积曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -864,7 +864,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE})。")
 
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
+    st.header(f" Probability Tables (X-axis = NE, from 0 to {max_NE}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3:
@@ -906,7 +906,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_2}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_2})。")
     
-    st.header(f"📊 Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
+    st.header(f" Cumulative Probability Tables (X-axis = NE, from 0 to {max_NE_2}) / 累积概率表")
     st.write("Tables show Cumulative Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示累积概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3_cumulative:
