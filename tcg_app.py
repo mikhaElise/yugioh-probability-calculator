@@ -892,7 +892,7 @@ else:
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards) / Part 4: P(抽6张含i张系统外 且 6-i张动点)")
+st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards) / P(抽6张含i张系统外 且 6-i张动点)")
 st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表分析后攻抽完6张牌后的特定手牌构成。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} (动点) + X轴 (系统外) + 剩余卡 (废件)")
 
