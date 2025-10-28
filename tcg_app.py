@@ -421,26 +421,23 @@ def get_part3_chart2_data(D, K_fixed): # Renamed function
 def get_part3_cumulative_data(D, K_fixed): # Renamed function
     max_NE = D - K_fixed
     
-    # Needs probabilities from the *previous* chart (i in 5, >=1 K in 6)
     P_exact_full = [[calculate_part3_chart2_prob_single(ne_val, D, K_fixed, i) for ne_val in range(-1, max_NE + 2)] for i in range(6)] 
 
     P_cumulative_full = [[0.0] * (max_NE + 3) for _ in range(5)] 
 
     for ne_idx in range(max_NE + 3): 
-        # Sum P(N5=j AND K6>=1) for j >= i
-        p0 = P_exact_full[0][ne_idx] # i=0
-        p1 = P_exact_full[1][ne_idx] # i=1
-        p2 = P_exact_full[2][ne_idx] # i=2
-        p3 = P_exact_full[3][ne_idx] # i=3
-        p4 = P_exact_full[4][ne_idx] # i=4
-        p5 = P_exact_full[5][ne_idx] # i=5
+        p0 = P_exact_full[0][ne_idx] 
+        p1 = P_exact_full[1][ne_idx] 
+        p2 = P_exact_full[2][ne_idx] 
+        p3 = P_exact_full[3][ne_idx] 
+        p4 = P_exact_full[4][ne_idx] 
+        p5 = P_exact_full[5][ne_idx] 
         
-        # P(>=i NE in 5, >=1 K in 6)
-        P_cumulative_full[0][ne_idx] = p1 + p2 + p3 + p4 + p5 # >= 1
-        P_cumulative_full[1][ne_idx] = p2 + p3 + p4 + p5      # >= 2
-        P_cumulative_full[2][ne_idx] = p3 + p4 + p5           # >= 3
-        P_cumulative_full[3][ne_idx] = p4 + p5                # >= 4
-        P_cumulative_full[4][ne_idx] = p5                     # >= 5 (==5)
+        P_cumulative_full[0][ne_idx] = p1 + p2 + p3 + p4 + p5 
+        P_cumulative_full[1][ne_idx] = p2 + p3 + p4 + p5      
+        P_cumulative_full[2][ne_idx] = p3 + p4 + p5           
+        P_cumulative_full[3][ne_idx] = p4 + p5                
+        P_cumulative_full[4][ne_idx] = p5                     
 
     plot_NE_col = list(range(max_NE + 1))
     df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
@@ -622,6 +619,14 @@ except Exception as e:
 st.sidebar.markdown("Bilibili: https://b23.tv/9aM3G4T")
 st.sidebar.header("Parameters / 参数")
 
+# --- (修改) 添加 Session State 初始化 ---
+if 'starter_k' not in st.session_state:
+    st.session_state.starter_k = 17 # 初始默认 K
+if 'ne_highlight' not in st.session_state:
+    st.session_state.ne_highlight = 20 # 初始默认 NE
+# --- 初始化结束 ---
+
+
 DECK_SIZE = st.sidebar.number_input(
     "1. Total Deck Size (D) / 卡组总数", 
     min_value=40, 
@@ -638,26 +643,42 @@ HAND_SIZE = st.sidebar.number_input(
     step=1,
     help="设置起手抽几张牌 (0-10)。注意: Part 3 & 4 计算固定为起手5张，抽第6张。"
 )
+
+# --- (修改) STARTER_COUNT_K 读取并验证 Session State ---
+max_k_possible = DECK_SIZE
+current_k_value = min(st.session_state.starter_k, max_k_possible)
+current_k_value = max(0, current_k_value)
+
 STARTER_COUNT_K = st.sidebar.number_input(
     "3. Starter Size (K) / 动点数", 
     min_value=0,
-    max_value=DECK_SIZE, 
-    value=min(17, DECK_SIZE), 
+    max_value=max_k_possible, 
+    value=current_k_value, 
     step=1,
-    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量，也用于 Part 1 高亮。" 
+    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量，也用于 Part 1 高亮。",
+    key='starter_k_input' # Added key
 )
+st.session_state.starter_k = STARTER_COUNT_K # Update session state after widget
+# --- 修改结束 ---
 
+
+# --- (修改) NE_HIGHLIGHT 读取并验证 Session State ---
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
 max_ne_possible = max(0, max_ne_possible) 
+current_ne_value = min(st.session_state.ne_highlight, max_ne_possible)
+current_ne_value = max(0, current_ne_value)
 
 NE_HIGHLIGHT = st.sidebar.number_input(
-    "4. Non-engine Size（NE）/系统外数量", 
+    "4. Non-engine Size（NE）/系统外数量", # <-- 编号调整为 4
     min_value=0,
     max_value=max_ne_possible, 
-    value=min(20, max_ne_possible), 
+    value=current_ne_value, 
     step=1,
-    help=f"输入一个 NE 值 (0 到 {max_ne_possible})，将在 Part 3 和 4 图表下方显示该点的精确概率。" 
+    help=f"输入一个 NE 值 (0 到 {max_ne_possible})，将在 Part 3 和 4 图表下方显示该点的精确概率。",
+    key='ne_highlight_input' # Added key
 )
+st.session_state.ne_highlight = NE_HIGHLIGHT # Update session state after widget
+# --- 修改结束 ---
 
 
 st.title("YGO Opening Hand Probability Calculator / YGO起手概率计算器")
@@ -691,7 +712,7 @@ if STARTER_COUNT_K in df_plot_1.index: # Use STARTER_COUNT_K for highlight
 else:
     st.caption(f"Value for K={STARTER_COUNT_K} not available in this chart (max K is {DECK_SIZE}). / K={STARTER_COUNT_K} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 图1概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each cumulative curve. / 表格显示每条累积曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -723,7 +744,7 @@ if STARTER_COUNT_K in df_plot_1b.index: # Use STARTER_COUNT_K for highlight
 else:
     st.caption(f"Value for K={STARTER_COUNT_K} not available in this chart (max K is {DECK_SIZE}). / K={STARTER_COUNT_K} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 图2概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each exact curve. / 表格显示每条精确曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1b:
@@ -946,10 +967,11 @@ try:
     
     img_meme_resized = img_meme.resize((target_width_meme, target_height_meme), Image.Resampling.LANCZOS)
     
-    st.image(img_meme_resized) 
+    # --- (修改) 将图片放在右下角 ---
+    st.image(img_meme_resized, use_column_width='auto', output_format='PNG') # Use auto width, ensure PNG for transparency if needed
+    # --- 修改结束 ---
+    
 except FileNotFoundError:
     st.caption("meme.png not found. (Place it in the same folder as the script)")
 except Exception as e:
     st.error(f"Error loading meme image: {e}")
-
-    
