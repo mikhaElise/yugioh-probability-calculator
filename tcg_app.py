@@ -685,7 +685,7 @@ st.write(f"Current Settings / 当前设置: **{DECK_SIZE}** Card Deck / 卡组�
 st.caption(f"Part 2, 3 & 4 Fixed Starter Count (K) / Part 2, 3 & 4 固定动点数 = **{STARTER_COUNT_K}**")
 
 
-st.header("Part 1, Chart 1: P(At least X Starter) / Part 1, 图1: 起手至少X张动点概率") 
+st.header("Part 1, Chart 1: P(At least X Starter) / 起手至少X张动点概率") 
 st.write("This chart shows the probability of drawing at least 'X' Starter cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中抽到至少X张动点的概率。") 
 
 st.subheader("Probability Formulas / 概率公式")
@@ -711,7 +711,7 @@ if K_HIGHLIGHT in df_plot_1.index:
 else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f"📊 Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 图1概率表") 
+st.header(f"📊 Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each cumulative curve. / 表格显示每条累积曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -719,7 +719,7 @@ for (table_name, table_data) in all_tables_1:
         st.dataframe(table_data, use_container_width=True)
 
 st.divider() 
-st.header("Part 1, Chart 2: P(Exactly `i` Starters in Hand) / Part 1, 图2: 起手正好i张动点概率")
+st.header("Part 1, Chart 2: P(Exactly `i` Starters in Hand) / 起手正好i张动点概率")
 st.write("This chart shows the probability of drawing exactly 'i' Starter cards (K) in your opening hand (n cards), as K (the X-axis) increases. / 此图表显示随着卡组中动点 (K) 数量 (X轴) 的增加，起手手牌 (n张) 中正好抽到i张动点的概率。")
 
 st.subheader("Probability Formula / 概率公式")
@@ -743,7 +743,7 @@ if K_HIGHLIGHT in df_plot_1b.index:
 else:
     st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f"📊 Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 图2概率表") 
+st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each exact curve. / 表格显示每条精确曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1b:
@@ -782,7 +782,7 @@ else:
 
 # --- (新) Part 3 新 Chart 1 ---
 st.divider()
-st.header("Part 3, Chart 1: P(Draw `i` Non-Engine AND >= 1 Starter in 5) / Part 3, 图1: P(抽5张含i张系统外 且 含>=1动点)")
+st.header("Part 3, Chart 1: P(Draw `i` Non-Engine AND >= 1 Starter in 5) / P(抽5张含i张系统外 且 含>=1动点)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} 动点 + X轴 (系统外) + 剩余卡 (废件)")
 
@@ -816,7 +816,7 @@ else:
     else:
         st.caption(f"Value for NE={NE_HIGHLIGHT} not available in this chart (max NE is {max_NE_new1}). / NE={NE_HIGHLIGHT} 的值在此图表中不可用 (最大 NE 为 {max_NE_new1})。")
 
-    st.header(f"📊 Probability Tables (X-axis = NE, from 0 to {max_NE_new1}) / 概率表")
+    st.header(f" Probability Tables (X-axis = NE, from 0 to {max_NE_new1}) / 概率表")
     st.write("Tables show Probability, Marginal (P(NE+1) - P(NE)), and Curvature (P(NE+1) - 2P(NE) + P(NE-1)). / 表格显示概率，边际和曲率。")
 
     for (table_name, table_data) in all_tables_3_new1:
@@ -826,7 +826,7 @@ else:
 
 
 st.divider()
-st.header("Part 3, Chart 2: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6) / Part 3, 图2: P(抽5张含i张系统外 且 抽6张含>=1动点)") # <-- Renumbered
+st.header("Part 3, Chart 2: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6) / P(抽5张含i张系统外 且 抽6张含>=1动点)") # <-- Renumbered
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} 动点 + X轴 (系统外) + 剩余卡 (废件)")
 
@@ -872,7 +872,7 @@ else:
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.header("Part 3, Chart 3: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6) / Part 3, 图3: P(抽5张含>=i张系统外 且 抽6张含>=1动点)") # <-- Renumbered
+st.header("Part 3, Chart 3: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6) / P(抽5张含>=i张系统外 且 抽6张含>=1动点)") # <-- Renumbered
 st.write(f"This chart shows the cumulative probability. It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表显示累积概率。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 
 st.subheader("Probability Formulas / 概率公式")
@@ -915,7 +915,7 @@ else:
 
 st.divider()
 st.header("Part 4: P(Draw `i` Non-Engine AND `6-i` Starters in 6 cards) / Part 4: P(抽6张含i张系统外 且 6-i张动点)")
-st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表分析后攻抽完6张牌后的精确手牌构成。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
+st.write(f"This chart analyzes the exact hand composition after drawing 6 cards (going second). It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表分析后攻抽完6张牌后的特定手牌构成。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} (动点) + X轴 (系统外) + 剩余卡 (废件)")
 
 st.subheader("Probability Formula / 概率公式")
@@ -936,7 +936,7 @@ else:
 
     if NE_HIGHLIGHT in df_plot_4.index:
         highlight_data_4 = df_plot_4.loc[NE_HIGHLIGHT]
-        st.write(f"**Exact Hand Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的精确手牌概率:**")
+        st.write(f"**Exact Hand Probabilities for NE = {NE_HIGHLIGHT} / NE = {NE_HIGHLIGHT} 时的特定手牌概率:**")
         valid_cols_4 = [col for col in highlight_data_4.index if not pd.isna(highlight_data_4[col])]
         cols_4 = st.columns(len(valid_cols_4))
         col_idx_4 = 0
