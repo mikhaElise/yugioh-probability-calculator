@@ -188,21 +188,15 @@ def get_combo_probability_data(D, n, K_fixed):
     }).set_index("A (Insecticides / 杀虫剂)")
     return df_plot, df_table
 
-# --- (新) Part 3, 新 Chart 1 计算函数 ---
 @st.cache_data
 def calculate_part3_new_chart1_prob_single(NE, D, K_fixed, i):
-    """
-    计算 P(N5=i AND K5>=1)
-    i = 0..4: P(N5=i AND K5>=1)
-    i = 5:    P(N5=5 AND K5=0) = P(N5=5)
-    """
-    n = 5 # Opening hand size
+    n = 5 
     
     if NE < i or K_fixed < 0 or i < 0:
         return 0.0
 
     Trash = D - K_fixed - NE
-    if Trash < 0 and NE + K_fixed != D: # Allow Trash=0 if NE+K fill deck
+    if Trash < 0 and NE + K_fixed != D: 
         return 0.0
 
     total_comb_5 = safe_comb(D, n)
@@ -210,35 +204,29 @@ def calculate_part3_new_chart1_prob_single(NE, D, K_fixed, i):
         return 0.0
         
     if i >= 0 and i <= 4:
-        # P(N5=i AND K5>=1) = P(N5=i) - P(N5=i AND K5=0)
-        
-        # P(N5=i) = C(NE, i) * C(D-NE, n-i) / C(D, n)
         ways_N5_is_i = safe_comb(NE, i) * safe_comb(D - NE, n - i)
         prob_N5_is_i = ways_N5_is_i / total_comb_5
         
-        # P(N5=i AND K5=0) = C(NE, i) * C(K, 0) * C(Trash, n-i) / C(D, n)
         ways_N5_is_i_K5_is_0 = safe_comb(NE, i) * safe_comb(Trash, n - i)
         prob_N5_is_i_K5_is_0 = ways_N5_is_i_K5_is_0 / total_comb_5
         
         return prob_N5_is_i - prob_N5_is_i_K5_is_0
         
-    elif i == 5: # Special case for the 6th curve: P(N5=5 AND K5=0) which is just P(N5=5)
-        # P(N5=5) = C(NE, 5) * C(D-NE, 0) / C(D, n)
+    elif i == 5: 
         ways_N5_is_5 = safe_comb(NE, 5)
         return ways_N5_is_5 / total_comb_5
     else:
-        return 0.0 # Should not happen
+        return 0.0 
 
 @st.cache_data
 def get_part3_new_chart1_data(D, K_fixed):
     max_NE = D - K_fixed
     
-    P_full = [[] for _ in range(6)] # 0..4 + special case 5
+    P_full = [[] for _ in range(6)] 
 
     for ne_val in range(-1, max_NE + 2):
-        for i in range(0, 5): # i=0..4 for >=1 K curves
+        for i in range(0, 5): 
             P_full[i].append(calculate_part3_new_chart1_prob_single(ne_val, D, K_fixed, i))
-        # Special case i=5 (N5=5, K5=0)
         P_full[5].append(calculate_part3_new_chart1_prob_single(ne_val, D, K_fixed, 5))
 
     plot_NE_col = list(range(max_NE + 1))
@@ -261,7 +249,7 @@ def get_part3_new_chart1_data(D, K_fixed):
         "C5: P(5 NE, 0 K in 5) / 抽5张含5系统外, 0动点",
     ]
     
-    for i_curve in range(6): # 0 to 5
+    for i_curve in range(6): 
         table_NE_col = list(range(max_NE + 1))
         P_curve = P_full[i_curve]
         
@@ -285,11 +273,10 @@ def get_part3_new_chart1_data(D, K_fixed):
         all_tables.append((curve_names[i_curve], df_display))
 
     return df_plot, all_tables
-# --- 新 Chart 1 函数结束 ---
 
 
 @st.cache_data
-def calculate_part3_prob_single(NE, D, K_fixed, i): # Renamed function for clarity
+def calculate_part3_chart2_prob_single(NE, D, K_fixed, i): # Renamed function
     n = 5
     n_plus_1 = 6
     
@@ -376,9 +363,9 @@ def get_part3_chart2_data(D, K_fixed): # Renamed function
 
     for ne_val in range(-1, max_NE + 2):
         for i in range(0, 5):
-            P_full[i].append(calculate_part3_prob_single(ne_val, D, K_fixed, i))
-        P_full[5].append(calculate_part3_prob_single(ne_val, D, K_fixed, 5))
-        P_full[7].append(calculate_part3_prob_single(ne_val, D, K_fixed, 7))
+            P_full[i].append(calculate_part3_chart2_prob_single(ne_val, D, K_fixed, i))
+        P_full[5].append(calculate_part3_chart2_prob_single(ne_val, D, K_fixed, 5))
+        P_full[7].append(calculate_part3_chart2_prob_single(ne_val, D, K_fixed, 7))
 
     plot_NE_col = list(range(max_NE + 1))
     df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
@@ -434,23 +421,26 @@ def get_part3_chart2_data(D, K_fixed): # Renamed function
 def get_part3_cumulative_data(D, K_fixed): # Renamed function
     max_NE = D - K_fixed
     
-    P_exact_full = [[calculate_part3_prob_single(ne_val, D, K_fixed, i) for ne_val in range(-1, max_NE + 2)] for i in range(6)] 
+    # Needs probabilities from the *previous* chart (i in 5, >=1 K in 6)
+    P_exact_full = [[calculate_part3_chart2_prob_single(ne_val, D, K_fixed, i) for ne_val in range(-1, max_NE + 2)] for i in range(6)] 
 
     P_cumulative_full = [[0.0] * (max_NE + 3) for _ in range(5)] 
 
     for ne_idx in range(max_NE + 3): 
-        p0 = P_exact_full[0][ne_idx]
-        p1 = P_exact_full[1][ne_idx]
-        p2 = P_exact_full[2][ne_idx]
-        p3 = P_exact_full[3][ne_idx]
-        p4 = P_exact_full[4][ne_idx]
-        p5 = P_exact_full[5][ne_idx]
+        # Sum P(N5=j AND K6>=1) for j >= i
+        p0 = P_exact_full[0][ne_idx] # i=0
+        p1 = P_exact_full[1][ne_idx] # i=1
+        p2 = P_exact_full[2][ne_idx] # i=2
+        p3 = P_exact_full[3][ne_idx] # i=3
+        p4 = P_exact_full[4][ne_idx] # i=4
+        p5 = P_exact_full[5][ne_idx] # i=5
         
-        P_cumulative_full[0][ne_idx] = p1 + p2 + p3 + p4 + p5 
-        P_cumulative_full[1][ne_idx] = p2 + p3 + p4 + p5      
-        P_cumulative_full[2][ne_idx] = p3 + p4 + p5           
-        P_cumulative_full[3][ne_idx] = p4 + p5                
-        P_cumulative_full[4][ne_idx] = p5                     
+        # P(>=i NE in 5, >=1 K in 6)
+        P_cumulative_full[0][ne_idx] = p1 + p2 + p3 + p4 + p5 # >= 1
+        P_cumulative_full[1][ne_idx] = p2 + p3 + p4 + p5      # >= 2
+        P_cumulative_full[2][ne_idx] = p3 + p4 + p5           # >= 3
+        P_cumulative_full[3][ne_idx] = p4 + p5                # >= 4
+        P_cumulative_full[4][ne_idx] = p5                     # >= 5 (==5)
 
     plot_NE_col = list(range(max_NE + 1))
     df_plot = pd.DataFrame({"NE (Non-Engine)": plot_NE_col}) 
@@ -654,24 +644,14 @@ STARTER_COUNT_K = st.sidebar.number_input(
     max_value=DECK_SIZE, 
     value=min(17, DECK_SIZE), 
     step=1,
-    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量。" 
+    help="为 Part 2, 3 和 4 的计算设置固定的动点 (K) 数量，也用于 Part 1 高亮。" 
 )
-
-K_HIGHLIGHT = st.sidebar.number_input(
-    "4. Highlight Starter Value (K) / 高亮动点数 (用于 Part 1)",
-    min_value=0,
-    max_value=DECK_SIZE, 
-    value=min(17, DECK_SIZE), 
-    step=1,
-    help=f"输入一个 K 值 (0 到 {DECK_SIZE})，将在 Part 1 图表下方显示该点的精确概率。"
-)
-
 
 max_ne_possible = DECK_SIZE - STARTER_COUNT_K
 max_ne_possible = max(0, max_ne_possible) 
 
 NE_HIGHLIGHT = st.sidebar.number_input(
-    "5. Non-engine Size（NE）/系统外数量", 
+    "4. Non-engine Size（NE）/系统外数量", 
     min_value=0,
     max_value=max_ne_possible, 
     value=min(20, max_ne_possible), 
@@ -696,9 +676,9 @@ st.caption("Where D = Deck Size, K = Starter Count, n = Hand Size, i = Min Start
 df_plot_1, all_tables_1, df_plot_1b, all_tables_1b = get_starter_probability_data(DECK_SIZE, HAND_SIZE) 
 st.line_chart(df_plot_1)
 
-if K_HIGHLIGHT in df_plot_1.index:
-    highlight_data_1 = df_plot_1.loc[K_HIGHLIGHT]
-    st.write(f"**Probabilities for K = {K_HIGHLIGHT} / K = {K_HIGHLIGHT} 时的概率:**")
+if STARTER_COUNT_K in df_plot_1.index: # Use STARTER_COUNT_K for highlight
+    highlight_data_1 = df_plot_1.loc[STARTER_COUNT_K]
+    st.write(f"**Probabilities for K = {STARTER_COUNT_K} / K = {STARTER_COUNT_K} 时的概率:**")
     valid_cols_1 = [col for col in highlight_data_1.index if not pd.isna(highlight_data_1[col])]
     cols_1 = st.columns(len(valid_cols_1))
     col_idx_1 = 0
@@ -709,9 +689,9 @@ if K_HIGHLIGHT in df_plot_1.index:
                 st.metric(label=curve_label, value=f"{prob:.2%}") 
                 col_idx_1 += 1
 else:
-    st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
+    st.caption(f"Value for K={STARTER_COUNT_K} not available in this chart (max K is {DECK_SIZE}). / K={STARTER_COUNT_K} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 图1概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each cumulative curve. / 表格显示每条累积曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -728,9 +708,9 @@ st.caption("Where D = Deck Size, K = Starter Count, n = Hand Size, i = Exact Sta
 
 st.line_chart(df_plot_1b)
 
-if K_HIGHLIGHT in df_plot_1b.index:
-    highlight_data_1b = df_plot_1b.loc[K_HIGHLIGHT]
-    st.write(f"**Exact Probabilities for K = {K_HIGHLIGHT} / K = {K_HIGHLIGHT} 时的精确概率:**")
+if STARTER_COUNT_K in df_plot_1b.index: # Use STARTER_COUNT_K for highlight
+    highlight_data_1b = df_plot_1b.loc[STARTER_COUNT_K]
+    st.write(f"**Exact Probabilities for K = {STARTER_COUNT_K} / K = {STARTER_COUNT_K} 时的精确概率:**")
     valid_cols_1b = [col for col in highlight_data_1b.index if not pd.isna(highlight_data_1b[col])]
     cols_1b = st.columns(len(valid_cols_1b))
     col_idx_1b = 0
@@ -741,9 +721,9 @@ if K_HIGHLIGHT in df_plot_1b.index:
                 st.metric(label=curve_label, value=f"{prob:.2%}") 
                 col_idx_1b += 1
 else:
-    st.caption(f"Value for K={K_HIGHLIGHT} not available in this chart (max K is {DECK_SIZE}). / K={K_HIGHLIGHT} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
+    st.caption(f"Value for K={STARTER_COUNT_K} not available in this chart (max K is {DECK_SIZE}). / K={STARTER_COUNT_K} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 概率表") 
+st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 图2概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each exact curve. / 表格显示每条精确曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1b:
@@ -780,7 +760,6 @@ else:
         st.dataframe(df_display_2, use_container_width=True, height=300)
 
 
-# --- (新) Part 3 新 Chart 1 ---
 st.divider()
 st.header("Part 3, Chart 1: P(Draw `i` Non-Engine AND >= 1 Starter in 5) / P(抽5张含i张系统外 且 含>=1动点)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
@@ -822,11 +801,10 @@ else:
     for (table_name, table_data) in all_tables_3_new1:
         with st.expander(f"**{table_name}**"):
             st.dataframe(table_data, use_container_width=True)
-# --- 新 Chart 1 结束 ---
 
 
 st.divider()
-st.header("Part 3, Chart 2: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6) / P(抽5张含i张系统外 且 抽6张含>=1动点)") # <-- Renumbered
+st.header("Part 3, Chart 2: P(Draw `i` Non-Engine in 5 AND >= 1 Starter in 6) / P(抽5张含i张系统外 且 抽6张含>=1动点)") 
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 st.write(f"Deck = `{STARTER_COUNT_K}` (K) + `X-axis` (NE) + `Remainder` (Trash) / 卡组 = {STARTER_COUNT_K} 动点 + X轴 (系统外) + 剩余卡 (废件)")
 
@@ -845,7 +823,7 @@ elif max_ne_possible < 0:
      st.warning(f"Warning: K ({STARTER_COUNT_K}) + Highlighted NE ({NE_HIGHLIGHT}) cannot exceed Deck Size ({DECK_SIZE}). Part 3 & 4 results invalid.")
 else:
     max_NE = max_ne_possible
-    df_plot_3, all_tables_3 = get_part3_chart2_data(DECK_SIZE, STARTER_COUNT_K) # <-- Function name potentially changed
+    df_plot_3, all_tables_3 = get_part3_chart2_data(DECK_SIZE, STARTER_COUNT_K) 
     
     st.line_chart(df_plot_3)
     
@@ -872,12 +850,12 @@ else:
             st.dataframe(table_data, use_container_width=True)
 
 st.divider()
-st.header("Part 3, Chart 3: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6) / P(抽5张含>=i张系统外 且 抽6张含>=1动点)") # <-- Renumbered
+st.header("Part 3, Chart 3: P(Draw `>= i` Non-Engine in 5 AND >= 1 Starter in 6) / P(抽5张含>=i张系统外 且 抽6张含>=1动点)") 
 st.write(f"This chart shows the cumulative probability. It uses the Fixed Starter (K) count of **{STARTER_COUNT_K}**. The X-axis is the **Non-Engine (NE) count**. / 此图表显示累积概率。使用固定的动点数 K=**{STARTER_COUNT_K}**。X轴是卡组中系统外卡牌 (NE) 的数量。")
 
 st.subheader("Probability Formulas / 概率公式")
 st.latex(r"P(\ge i \text{ NE in 5, } \ge 1 \text{ K in 6}) = \sum_{j=i}^{5} P(j \text{ NE in 5, } \ge 1 \text{ K in 6})")
-st.caption("Cumulative probabilities are sums of the corresponding exact probabilities from Chart 2 / 累积概率是图2中相应精确概率的和") # <-- Updated reference
+st.caption("Cumulative probabilities are sums of the corresponding exact probabilities from Chart 2 / 累积概率是图2中相应精确概率的和") 
 
 st.caption("Note: Calculations assume opening 5, drawing 1 (total 6 cards). / 注意：计算假设起手5张，抽第6张。")
 
@@ -973,3 +951,5 @@ except FileNotFoundError:
     st.caption("meme.png not found. (Place it in the same folder as the script)")
 except Exception as e:
     st.error(f"Error loading meme image: {e}")
+
+    
