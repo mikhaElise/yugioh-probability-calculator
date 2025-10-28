@@ -691,7 +691,7 @@ if STARTER_COUNT_K in df_plot_1.index: # Use STARTER_COUNT_K for highlight
 else:
     st.caption(f"Value for K={STARTER_COUNT_K} not available in this chart (max K is {DECK_SIZE}). / K={STARTER_COUNT_K} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 图1概率表") 
+st.header(f" Probability Tables for Chart 1 (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each cumulative curve. / 表格显示每条累积曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1:
@@ -723,7 +723,7 @@ if STARTER_COUNT_K in df_plot_1b.index: # Use STARTER_COUNT_K for highlight
 else:
     st.caption(f"Value for K={STARTER_COUNT_K} not available in this chart (max K is {DECK_SIZE}). / K={STARTER_COUNT_K} 的值在此图表中不可用 (最大 K 为 {DECK_SIZE})。")
 
-st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 图2概率表") 
+st.header(f" Probability Tables for Chart 2 (K=1 to {DECK_SIZE}) / 概率表") 
 st.write("Tables show Probability, Marginal (P(K) - P(K-1)), and Curvature (P(K+1) - 2P(K) + P(K-1)) for each exact curve. / 表格显示每条精确曲线的概率，边际和曲率。") 
 
 for (table_name, table_data) in all_tables_1b:
@@ -732,7 +732,7 @@ for (table_name, table_data) in all_tables_1b:
 
 
 st.divider()
-st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / Part 2: P(至少1动点 且 至少1杀虫剂)")
+st.header("Part 2: P(At least 1 Starter AND At least 1 'Insecticide') / P(至少1动点 且 至少1杀虫剂)")
 st.write(f"This chart uses the Fixed Starter (K) count of **{STARTER_COUNT_K}** and shows how the probability changes as the 'Insecticide' (A) count (the X-axis) increases in your opening hand (n cards). / 此图表使用固定的动点数 K=**{STARTER_COUNT_K}**，显示随着卡组中‘杀虫剂’(A) 数量 (X轴) 的增加，起手手牌 (n张) 中同时抽到至少1动点和至少1杀虫剂的概率变化。")
 
 st.subheader("Probability Formula / 概率公式")
